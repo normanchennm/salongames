@@ -16,6 +16,7 @@ import wouldyourather from "./wouldyourather";
 import notstrangers from "./notstrangers";
 import fibbage from "./fibbage";
 import badanswers from "./badanswers";
+import telephonepic from "./telephonepic";
 
 export const GAMES: Game[] = [
   werewolf,
@@ -26,6 +27,7 @@ export const GAMES: Game[] = [
   trivia,
   fibbage,
   badanswers,
+  telephonepic,
   charades,
   twotruths,
   neverhaveiever,
