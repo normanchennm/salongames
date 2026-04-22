@@ -6,6 +6,7 @@ import type { Game } from "./types";
 import werewolf from "./werewolf";
 import mafia from "./mafia";
 import spyfall from "./spyfall";
+import avalon from "./avalon";
 import charades from "./charades";
 import trivia from "./trivia";
 import twotruths from "./twotruths";
@@ -15,6 +16,7 @@ export const GAMES: Game[] = [
   werewolf,
   mafia,
   spyfall,
+  avalon,
   trivia,
   charades,
   twotruths,
