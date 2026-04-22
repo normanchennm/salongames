@@ -25,6 +25,8 @@ import connect4 from "./connect4";
 import hangman from "./hangman";
 import liarsdice from "./liarsdice";
 import reversi from "./reversi";
+import wordle from "./wordle";
+import dotsboxes from "./dotsboxes";
 
 export const GAMES: Game[] = [
   werewolf,
@@ -47,7 +49,9 @@ export const GAMES: Game[] = [
   tictactoe,
   connect4,
   reversi,
+  dotsboxes,
   hangman,
+  wordle,
   liarsdice,
 ];
 
