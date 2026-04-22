@@ -27,9 +27,11 @@ import liarsdice from "./liarsdice";
 import reversi from "./reversi";
 import wordle from "./wordle";
 import dotsboxes from "./dotsboxes";
+import onenightww from "./onenightww";
 
 export const GAMES: Game[] = [
   werewolf,
+  onenightww,
   mafia,
   spyfall,
   avalon,
