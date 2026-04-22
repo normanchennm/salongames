@@ -23,6 +23,8 @@ import escaperoom from "./escaperoom";
 import tictactoe from "./tictactoe";
 import connect4 from "./connect4";
 import hangman from "./hangman";
+import liarsdice from "./liarsdice";
+import reversi from "./reversi";
 
 export const GAMES: Game[] = [
   werewolf,
@@ -44,7 +46,9 @@ export const GAMES: Game[] = [
   notstrangers,
   tictactoe,
   connect4,
+  reversi,
   hangman,
+  liarsdice,
 ];
 
 export function getGame(id: string): Game | undefined {
