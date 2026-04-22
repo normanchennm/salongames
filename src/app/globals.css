@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Dark-by-default. Stashd-sibling palette. */
+  --background: 28 10% 6%;        /* #100d0b */
+  --foreground: 38 25% 94%;       /* #f4ede0 */
+  --ember: 25 85% 60%;            /* #ee9d52 */
+  --ember-soft: 25 60% 40%;       /* #b07a45 */
+  --muted: 34 10% 49%;            /* #8c7f70 */
+  --border: 28 15% 14%;           /* #2a241e */
+}
+
+html,
+body {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+body {
+  font-family: var(--font-mono), Consolas, monospace;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "ss01", "cv11";
+}
+
+/* Serif utility for editorial copy + wordmark. */
+.font-display {
+  font-family: var(--font-serif), Georgia, "Times New Roman", serif;
+  font-feature-settings: "ss01";
+}
+
+/* Hairline divider used across the app — editorial gallery feel. */
+.hairline {
+  background: linear-gradient(
+    to right,
+    transparent,
+    hsl(var(--ember) / 0.4),
+    transparent
+  );
+  height: 1px;
+}
