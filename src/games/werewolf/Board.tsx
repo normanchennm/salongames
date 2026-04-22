@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
+import { playCue, WEREWOLF_CUES } from "@/lib/narrator";
 import { ROLES, defaultRoleMix, shuffle, type RoleId } from "./roles";
 
 /** Werewolf pass-and-play MVP. Covers the full loop:
@@ -39,6 +40,30 @@ export const WerewolfBoard: React.FC<GameComponentProps> = ({ players, onComplet
   const [state, setState] = useState(() => initialState(players));
   const alive = state.players.filter((p) => p.alive);
 
+  // Narration cues fire when the phase changes. The narrator helper is
+  // a no-op when the MP3 is missing or the user has muted; this useEffect
+  // only needs to map phase → cue. Keeping it centralized beats
+  // sprinkling playCue() through every transition handler.
+  useEffect(() => {
+    const kind = state.phase.kind;
+    if (kind === "night-intro") playCue(WEREWOLF_CUES.nightIntro);
+    else if (kind === "night-werewolf") playCue(WEREWOLF_CUES.nightWolf);
+    else if (kind === "night-seer") playCue(WEREWOLF_CUES.nightSeer);
+    else if (kind === "night-doctor") playCue(WEREWOLF_CUES.nightDoctor);
+    else if (kind === "day-resolution") {
+      const p = state.phase as { kind: "day-resolution"; killedId: string | null };
+      playCue(p.killedId ? WEREWOLF_CUES.dayKilled : WEREWOLF_CUES.daySafe);
+    } else if (kind === "day-discussion") playCue(WEREWOLF_CUES.dayDiscuss);
+    else if (kind === "day-vote") playCue(WEREWOLF_CUES.dayVote);
+    else if (kind === "day-resolution-vote") {
+      const p = state.phase as { kind: "day-resolution-vote"; eliminatedId: string | null };
+      playCue(p.eliminatedId ? WEREWOLF_CUES.dayVotedOut : WEREWOLF_CUES.dayTie);
+    } else if (kind === "end") {
+      const p = state.phase as { kind: "end"; winningTeam: "village" | "werewolf" };
+      playCue(p.winningTeam === "village" ? WEREWOLF_CUES.villageWins : WEREWOLF_CUES.wolvesWin);
+    }
+  }, [state.phase.kind]);
+
   // --- win-check helper --- --------------------------------------
   function checkWin(players: PlayerState[]): "village" | "werewolf" | null {
     const alive = players.filter((p) => p.alive);
@@ -75,6 +100,7 @@ export const WerewolfBoard: React.FC<GameComponentProps> = ({ players, onComplet
       <RevealCard
         playerName={current.name}
         roleName={role.name}
+        roleId={current.role}
         roleDescription={role.description}
         roleAccent={role.accent}
         onPass={() => {
@@ -370,11 +396,12 @@ function initialState(players: { id: string; name: string; color: string }[]): {
 interface RevealCardProps {
   playerName: string;
   roleName: string;
+  roleId: RoleId;
   roleDescription: string;
   roleAccent: string;
   onPass: () => void;
 }
-function RevealCard({ playerName, roleName, roleDescription, roleAccent, onPass }: RevealCardProps) {
+function RevealCard({ playerName, roleName, roleId, roleDescription, roleAccent, onPass }: RevealCardProps) {
   const [shown, setShown] = useState(false);
   return (
     <section className="mx-auto max-w-md animate-fade-up text-center">
@@ -383,7 +410,21 @@ function RevealCard({ playerName, roleName, roleDescription, roleAccent, onPass 
       {!shown ? (
         <button
           type="button"
-          onClick={() => setShown(true)}
+          onClick={() => {
+            setShown(true);
+            // Fire the role-reveal narration when the player taps
+            // "Reveal." Tap is the user gesture Safari wants, so the
+            // cue plays reliably on iOS.
+            const cue =
+              roleId === "werewolf"
+                ? WEREWOLF_CUES.roleWerewolf
+                : roleId === "seer"
+                  ? WEREWOLF_CUES.roleSeer
+                  : roleId === "doctor"
+                    ? WEREWOLF_CUES.roleDoctor
+                    : WEREWOLF_CUES.roleVillager;
+            playCue(cue);
+          }}
           className="mt-10 w-full rounded-md border border-[hsl(var(--ember)/0.4)] bg-[hsl(var(--ember)/0.08)] py-5 font-mono text-[11px] uppercase tracking-[0.2em] text-[hsl(var(--ember))] transition-colors hover:bg-[hsl(var(--ember)/0.16)]"
         >
           Reveal my role — only I should see

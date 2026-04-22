@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fraunces, Geist_Mono } from "next/font/google";
 import { Wordmark } from "@/components/Wordmark";
+import { MuteToggle } from "@/components/MuteToggle";
 import "./globals.css";
 
 // Fraunces for the editorial "salon" half of the wordmark + display copy.
@@ -36,6 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <nav className="flex items-center gap-5 font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
               <a href="/" className="transition-colors hover:text-fg">Games</a>
               <a href="/about/" className="transition-colors hover:text-fg">About</a>
+              <MuteToggle />
             </nav>
           </div>
         </header>
