@@ -19,6 +19,7 @@ import badanswers from "./badanswers";
 import telephonepic from "./telephonepic";
 import insider from "./insider";
 import fishbowl from "./fishbowl";
+import escaperoom from "./escaperoom";
 
 export const GAMES: Game[] = [
   werewolf,
@@ -26,6 +27,7 @@ export const GAMES: Game[] = [
   spyfall,
   avalon,
   insider,
+  escaperoom,
   celebrity,
   fishbowl,
   trivia,
