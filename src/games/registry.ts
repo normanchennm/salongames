@@ -37,6 +37,8 @@ import yahtzee from "./yahtzee";
 import war from "./war";
 import rpsls from "./rpsls";
 import mastermind from "./mastermind";
+import nmm from "./nmm";
+import mancala from "./mancala";
 
 export const GAMES: Game[] = [
   werewolf,
@@ -71,6 +73,8 @@ export const GAMES: Game[] = [
   farkle,
   yahtzee,
   mastermind,
+  nmm,
+  mancala,
   war,
   rpsls,
 ];
