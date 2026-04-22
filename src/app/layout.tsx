@@ -3,6 +3,7 @@ import { Fraunces, Geist_Mono } from "next/font/google";
 import { Wordmark } from "@/components/Wordmark";
 import { MuteToggle } from "@/components/MuteToggle";
 import { RegisterSW } from "@/components/RegisterSW";
+import { FeedbackButton } from "@/components/FeedbackButton";
 import "./globals.css";
 
 // Fraunces for the editorial "salon" half of the wordmark + display copy.
@@ -74,6 +75,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
         </header>
         <main className="mx-auto max-w-5xl px-6 py-10">{children}</main>
+        <FeedbackButton />
         <footer className="mt-16 border-t border-border">
           <div className="mx-auto flex max-w-5xl items-center justify-between gap-6 px-6 py-8 font-mono text-[10px] uppercase tracking-[0.2em] text-muted">
             <Wordmark variant="inline" size="sm" />

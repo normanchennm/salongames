@@ -9,6 +9,9 @@ const escaperoom: Game = {
   minPlayers: 1,
   maxPlayers: 6,
   estimatedMinutes: 20,
+  // First two rooms free-to-play; room-level gating (future rooms Pro)
+  // lives inside the Escape Rooms hub. Leaving the catalog entry free so
+  // the hub is visitable.
   tier: "free",
   coverGradient: ["#2a1a3a", "#100d0b"],
   description:

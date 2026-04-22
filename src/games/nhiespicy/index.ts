@@ -9,7 +9,7 @@ const nhiespicy: Game = {
   minPlayers: 2,
   maxPlayers: 8,
   estimatedMinutes: 20,
-  tier: "free",
+  tier: "pro",
   coverGradient: ["#4a1a3a", "#100d0b"],
   description:
     "An adult-only prompt pack for the classic game. 50 prompts ranging from confessional to genuinely risqué. Made for couples on a third date, for close-friend road trips, or for long nights with good wine. Unlocks in Dating Mode (18+).",

@@ -7,6 +7,7 @@ import { GameHero } from "@/components/GameHero";
 import { getGame } from "@/games/registry";
 import type { GameResult, Player } from "@/games/types";
 import { DEFAULT_SETTINGS, appendHistory, loadSettings } from "@/lib/persistence";
+import { track } from "@/lib/telemetry";
 
 /** Client half of the game route. Owns the roster → game flow.
  *
@@ -29,8 +30,13 @@ export function GameRunner({ gameId }: { gameId: string }) {
   // is almost certainly "accidentally opened"; anything older deserves a
   // confirm to prevent losing real progress.
   useEffect(() => {
-    if (players) gameStartedAt.current = Date.now();
-  }, [players, instance]);
+    if (players) {
+      gameStartedAt.current = Date.now();
+      track("game_started", { gameId, players: players.length, replay: instance });
+    } else {
+      track("game_opened", { gameId });
+    }
+  }, [players, instance, gameId]);
 
   const handleQuit = () => {
     const elapsed = gameStartedAt.current ? Date.now() - gameStartedAt.current : 0;
@@ -39,6 +45,7 @@ export function GameRunner({ gameId }: { gameId: string }) {
       const ok = window.confirm("Quit this game? Progress will be lost.");
       if (!ok) return;
     }
+    track("game_quit", { gameId, elapsedSec: Math.round(elapsed / 1000) });
     router.push("/");
   };
 
@@ -71,6 +78,12 @@ export function GameRunner({ gameId }: { gameId: string }) {
       onComplete={(partial) => {
         const result: GameResult = { gameId: game.id, ...partial };
         appendHistory(result);
+        track("game_completed", {
+          gameId: game.id,
+          players: players.length,
+          durationSec: partial.durationSec,
+          winners: partial.winnerIds.length,
+        });
         setInstance((i) => i + 1);
       }}
       onQuit={handleQuit}

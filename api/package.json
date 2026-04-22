@@ -1,0 +1,19 @@
+{
+  "name": "salongames-api",
+  "version": "1.0.0",
+  "description": "Azure Functions backend for salongames (feedback + telemetry + admin queries).",
+  "main": "dist/src/functions/*.js",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --w",
+    "start": "func start"
+  },
+  "dependencies": {
+    "@azure/data-tables": "^13.3.0",
+    "@azure/functions": "^4.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.0"
+  }
+}
