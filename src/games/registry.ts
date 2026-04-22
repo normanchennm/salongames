@@ -30,6 +30,8 @@ import dotsboxes from "./dotsboxes";
 import onenightww from "./onenightww";
 import checkers from "./checkers";
 import battleship from "./battleship";
+import pig from "./pig";
+import farkle from "./farkle";
 
 export const GAMES: Game[] = [
   werewolf,
@@ -59,6 +61,8 @@ export const GAMES: Game[] = [
   hangman,
   wordle,
   liarsdice,
+  pig,
+  farkle,
 ];
 
 export function getGame(id: string): Game | undefined {
