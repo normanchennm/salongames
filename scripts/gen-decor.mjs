@@ -48,17 +48,22 @@ async function callAzureOpenAI(prompt) {
   throw new Error("No image data");
 }
 async function callMai(prompt) {
+  // MAI-Image-2e runs on Azure AI Inference, not the OpenAI-compat path.
+  // URL: /mai/v1/images/generations on the services.ai.azure.com host.
+  // Body uses width/height instead of size and needs an explicit "model".
   const endpoint = process.env.MAI_ENDPOINT;
   const key = process.env.MAI_KEY;
-  const apiVersion = process.env.MAI_API_VERSION ?? "2024-10-21";
-  if (!endpoint || !key) throw new Error("Set MAI_ENDPOINT and MAI_KEY");
-  const url = `${endpoint.replace(/\/$/, "")}/images/generations?api-version=${apiVersion}`;
+  const deployment = process.env.MAI_DEPLOYMENT ?? "MAI-Image-2e";
+  const apiVersion = process.env.MAI_API_VERSION ?? "preview";
+  if (!endpoint || !key) throw new Error("Set MAI_ENDPOINT and MAI_KEY.");
+  const [w, h] = SIZE.split("x").map((n) => parseInt(n, 10));
+  const url = `${endpoint.replace(/\/$/, "")}/mai/v1/images/generations?api-version=${apiVersion}`;
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json", "api-key": key },
-    body: JSON.stringify({ prompt, size: SIZE, n: 1, quality: QUALITY }),
+    body: JSON.stringify({ prompt, model: deployment, width: w, height: h, n: 1 }),
   });
-  if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
+  if (!res.ok) throw new Error(`MAI image failed ${res.status}: ${await res.text()}`);
   const j = await res.json();
   const first = j.data?.[0];
   if (first.b64_json) return Buffer.from(first.b64_json, "base64");

@@ -143,37 +143,27 @@ async function callAzureOpenAI(prompt) {
 }
 
 async function callMai(prompt) {
+  // MAI-Image-2e runs on Azure AI Inference, not the OpenAI-compat path.
+  // URL: /mai/v1/images/generations on the services.ai.azure.com host.
+  // Body uses width/height instead of size and needs an explicit "model".
   const endpoint = process.env.MAI_ENDPOINT;
   const key = process.env.MAI_KEY;
-  const apiVersion = process.env.MAI_API_VERSION ?? "2024-10-21";
-  if (!endpoint || !key) {
-    throw new Error("Set MAI_ENDPOINT and MAI_KEY.");
-  }
-  // Expect MAI_ENDPOINT to be the full deployment URL up to (but not
-  // including) /images/generations. Many Azure AI Foundry URLs already
-  // include /openai/deployments/<name>.
-  const url = `${endpoint.replace(/\/$/, "")}/images/generations?api-version=${apiVersion}`;
+  const deployment = process.env.MAI_DEPLOYMENT ?? "MAI-Image-2e";
+  const apiVersion = process.env.MAI_API_VERSION ?? "preview";
+  if (!endpoint || !key) throw new Error("Set MAI_ENDPOINT and MAI_KEY.");
+  const [w, h] = SIZE.split("x").map((n) => parseInt(n, 10));
+  const url = `${endpoint.replace(/\/$/, "")}/mai/v1/images/generations?api-version=${apiVersion}`;
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json", "api-key": key },
-    body: JSON.stringify({
-      prompt,
-      size: SIZE,
-      n: 1,
-      quality: QUALITY,
-    }),
+    body: JSON.stringify({ prompt, model: deployment, width: w, height: h, n: 1 }),
   });
   if (!res.ok) throw new Error(`MAI image failed ${res.status}: ${await res.text()}`);
   const j = await res.json();
   const first = j.data?.[0];
-  if (!first) throw new Error("No image in response: " + JSON.stringify(j));
   if (first.b64_json) return Buffer.from(first.b64_json, "base64");
-  if (first.url) {
-    const imgRes = await fetch(first.url);
-    if (!imgRes.ok) throw new Error(`Image URL fetch failed: ${imgRes.status}`);
-    return Buffer.from(await imgRes.arrayBuffer());
-  }
-  throw new Error("Response had neither b64_json nor url");
+  if (first.url) { const r = await fetch(first.url); return Buffer.from(await r.arrayBuffer()); }
+  throw new Error("No image data");
 }
 
 async function generate(prompt) {
