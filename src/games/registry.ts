@@ -43,6 +43,8 @@ import resistance from "./resistance";
 import coup from "./coup";
 import sh from "./sh";
 import hearts from "./hearts";
+import spades from "./spades";
+import rummy from "./rummy";
 
 export const GAMES: Game[] = [
   werewolf,
@@ -61,6 +63,8 @@ export const GAMES: Game[] = [
   badanswers,
   coup,
   hearts,
+  spades,
+  rummy,
   codenames,
   telephonepic,
   charades,
