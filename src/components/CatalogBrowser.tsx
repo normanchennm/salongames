@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Search, X } from "lucide-react";
 import { GameCard } from "@/components/GameCard";
 import { DecorArt } from "@/components/DecorArt";
+import { loadDatingState } from "@/lib/persistence";
 import type { Game } from "@/games/types";
 
 /** Catalog browser with search, category filter, player-count filter,
@@ -38,9 +39,16 @@ export function CatalogBrowser({ games }: { games: Game[] }) {
   const [categories, setCategories] = useState<Set<Category>>(new Set());
   const [playerBand, setPlayerBand] = useState<PlayerBand | null>(null);
   const [sort, setSort] = useState<Sort>("name");
+  const [datingMode, setDatingMode] = useState(false);
+
+  useEffect(() => {
+    setDatingMode(loadDatingState().enabled);
+  }, []);
 
   const filtered = useMemo(() => {
-    let out = games.slice();
+    // Adult-only games are hidden from the main catalog unless Dating
+    // Mode is on (explicit 18+ opt-in on /date).
+    let out = games.filter((g) => !g.adultOnly || datingMode);
     if (query.trim()) {
       const q = query.trim().toLowerCase();
       out = out.filter((g) =>
@@ -63,7 +71,7 @@ export function CatalogBrowser({ games }: { games: Game[] }) {
       case "players-desc": out.sort((a, b) => b.maxPlayers - a.maxPlayers || b.minPlayers - a.minPlayers); break;
     }
     return out;
-  }, [games, query, categories, playerBand, sort]);
+  }, [games, query, categories, playerBand, sort, datingMode]);
 
   const toggleCategory = (cat: Category) => {
     const next = new Set(categories);

@@ -12,6 +12,7 @@ import type { GameResult, GameSettings, Player } from "@/games/types";
 const K_ROSTER = "salongames:roster:v1";
 const K_HISTORY = "salongames:history:v1";
 const K_SETTINGS = "salongames:settings:v1";
+const K_DATING = "salongames:dating:v1"; // { enabled, confirmedAt } — 18+ opt-in
 
 const HISTORY_CAP = 50;
 
@@ -64,4 +65,25 @@ export function loadSettings(): GameSettings {
 }
 export function saveSettings(patch: Partial<GameSettings>): void {
   safeSet(K_SETTINGS, { ...loadSettings(), ...patch });
+}
+
+/** Dating mode — adult-only content packs (intimate / spicy prompts).
+ *  Gated behind an explicit 18+ confirmation the first time a user
+ *  enables it. Stored per-device in localStorage. */
+
+export interface DatingState {
+  enabled: boolean;
+  confirmedAt: string | null;
+}
+export const DEFAULT_DATING: DatingState = { enabled: false, confirmedAt: null };
+
+export function loadDatingState(): DatingState {
+  return { ...DEFAULT_DATING, ...safeGet<Partial<DatingState>>(K_DATING, {}) };
+}
+export function setDatingMode(enabled: boolean): void {
+  const prev = loadDatingState();
+  safeSet(K_DATING, {
+    enabled,
+    confirmedAt: enabled ? prev.confirmedAt ?? new Date().toISOString() : prev.confirmedAt,
+  });
 }

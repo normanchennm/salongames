@@ -54,4 +54,7 @@ export interface Game {
   description: string;
   /** Lazy-loaded so the shell bundle doesn't pull every game's code. */
   Component: React.FC<GameComponentProps>;
+  /** Adults-only content. Hidden from the main catalog unless the user
+   *  enables Dating Mode with an 18+ confirmation. */
+  adultOnly?: boolean;
 }

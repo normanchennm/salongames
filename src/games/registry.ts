@@ -48,6 +48,8 @@ import rummy from "./rummy";
 import backgammon from "./backgammon";
 import go from "./go";
 import chess from "./chess";
+import nhiespicy from "./nhiespicy";
+import truthordare from "./truthordare";
 
 export const GAMES: Game[] = [
   werewolf,
@@ -75,6 +77,8 @@ export const GAMES: Game[] = [
   neverhaveiever,
   wouldyourather,
   notstrangers,
+  nhiespicy,
+  truthordare,
   tictactoe,
   connect4,
   checkers,
