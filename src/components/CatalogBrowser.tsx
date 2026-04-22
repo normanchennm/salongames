@@ -24,14 +24,18 @@ type Tab = "popular" | "all";
  *  a popularity bump so the list adapts to actual use. */
 const POPULAR_IDS: string[] = [
   "werewolf",        // the iconic social-deduction flagship
+  "onenightww",      // single-night variant, lower bar to play
+  "mafia",           // classic variant, narration-led
   "codenames",       // crowd-pleaser, scales 4-10
+  "avalon",          // deeper social deduction after people like Werewolf
   "escaperoom",      // our unique-to-this-app moment
   "fibbage",         // party hit with immediate feedback
-  "twotruths",       // universal, 2 minutes to teach
-  "wouldyourather",  // universal, no scoring drama
-  "avalon",          // deeper social deduction after people like Werewolf
+  "badanswers",      // Cards Against Humans — fill-the-blank judge
   "telephonepic",    // visual memento, viral-friendly
   "charades",        // classic, zero-prep, scales
+  "notstrangers",    // Not Really Strangers — conversation / date-night hit
+  "twotruths",       // universal, 2 minutes to teach
+  "wouldyourather",  // universal, no scoring drama
   "chess",           // the eternal 2-player option
 ];
 
