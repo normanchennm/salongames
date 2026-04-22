@@ -28,6 +28,8 @@ import reversi from "./reversi";
 import wordle from "./wordle";
 import dotsboxes from "./dotsboxes";
 import onenightww from "./onenightww";
+import checkers from "./checkers";
+import battleship from "./battleship";
 
 export const GAMES: Game[] = [
   werewolf,
@@ -50,8 +52,10 @@ export const GAMES: Game[] = [
   notstrangers,
   tictactoe,
   connect4,
+  checkers,
   reversi,
   dotsboxes,
+  battleship,
   hangman,
   wordle,
   liarsdice,
