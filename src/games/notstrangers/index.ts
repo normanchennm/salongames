@@ -3,7 +3,7 @@ import { NotStrangersBoard } from "./Board";
 
 const notstrangers: Game = {
   id: "notstrangers",
-  name: "Not Strangers",
+  name: "Not Really Strangers",
   tagline: "Three levels of questions. How deep is up to you.",
   category: "party",
   minPlayers: 2,

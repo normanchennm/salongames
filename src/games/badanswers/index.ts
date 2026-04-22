@@ -3,7 +3,7 @@ import { BadAnswersBoard } from "./Board";
 
 const badanswers: Game = {
   id: "badanswers",
-  name: "Bad Answers",
+  name: "Cards Against Humans",
   tagline: "Fill-in-the-blanks. Your friends judge. The worst wins.",
   category: "card",
   minPlayers: 3,

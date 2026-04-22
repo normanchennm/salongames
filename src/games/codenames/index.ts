@@ -3,7 +3,7 @@ import { CodenamesBoard } from "./Board";
 
 const codenames: Game = {
   id: "codenames",
-  name: "Code Words",
+  name: "Code Names",
   tagline: "One-word clues. Partnership deduction. Don't hit the assassin.",
   category: "party",
   minPlayers: 4,

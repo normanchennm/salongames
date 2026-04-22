@@ -3,7 +3,7 @@ import { AvalonBoard } from "./Board";
 
 const avalon: Game = {
   id: "avalon",
-  name: "Knights of Camelot",
+  name: "Avalone",
   tagline: "Quest-based social deduction. Good vs. Evil. Merlin watches.",
   category: "social-deduction",
   minPlayers: 5,

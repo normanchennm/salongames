@@ -3,7 +3,7 @@ import { YahtzeeBoard } from "./Board";
 
 const yahtzee: Game = {
   id: "yahtzee",
-  name: "Dice Card",
+  name: "Yahtzy",
   tagline: "Five dice, three rolls, thirteen boxes.",
   category: "abstract",
   minPlayers: 1,

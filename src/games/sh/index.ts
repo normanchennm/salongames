@@ -3,7 +3,7 @@ import { SecretHitlerBoard } from "./Board";
 
 const sh: Game = {
   id: "sh",
-  name: "Chancellor",
+  name: "Secret Chancellor",
   tagline: "Policy drafts, elections, and one very secret identity.",
   category: "social-deduction",
   minPlayers: 5,
