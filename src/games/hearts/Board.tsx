@@ -43,6 +43,7 @@ interface Trick { leadSuit: Suit; plays: { playerId: string; card: Card }[]; lea
 type Phase =
   | { kind: "deal" }
   | { kind: "pass"; playerIdx: number }
+  | { kind: "play-pass"; trickNo: number; trick: Trick; currentIdx: number }
   | { kind: "play"; trickNo: number; trick: Trick; currentIdx: number }
   | { kind: "trick-end"; winningIdx: number; points: number; trickNo: number }
   | { kind: "end"; scores: number[] };
@@ -128,6 +129,22 @@ export const HeartsBoard: React.FC<GameComponentProps> = ({ players, onComplete,
     );
   }
 
+  if (phase.kind === "play-pass") {
+    const current = players[phase.currentIdx];
+    return (
+      <section className="mx-auto max-w-md animate-fade-up text-center">
+        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted">
+          Trick {phase.trickNo + 1} / 13 · play {phase.trick.plays.length + 1} / 4
+        </p>
+        <h2 className="mt-6 font-display text-4xl italic">Pass to {current.name}.</h2>
+        <p className="mt-3 text-sm text-muted">Private — only {current.name} should see your hand.</p>
+        <button type="button" onClick={() => setPhase({ kind: "play", trickNo: phase.trickNo, trick: phase.trick, currentIdx: phase.currentIdx })} className="mt-10 w-full rounded-md bg-[hsl(var(--ember))] py-3 font-mono text-[11px] uppercase tracking-wider text-bg">
+          I&apos;m {current.name} — show my hand →
+        </button>
+      </section>
+    );
+  }
+
   if (phase.kind === "play") {
     const p = phase;
     const current = players[p.currentIdx];
@@ -172,7 +189,7 @@ export const HeartsBoard: React.FC<GameComponentProps> = ({ players, onComplete,
         setScores(nextScores);
         setPhase({ kind: "trick-end", winningIdx: winIdx, points, trickNo: p.trickNo });
       } else {
-        setPhase({ ...p, trick: newTrick, currentIdx: (p.currentIdx + 1) % 4 });
+        setPhase({ kind: "play-pass", trickNo: p.trickNo, trick: newTrick, currentIdx: (p.currentIdx + 1) % 4 });
       }
     };
 
@@ -250,7 +267,7 @@ export const HeartsBoard: React.FC<GameComponentProps> = ({ players, onComplete,
           if (nextTrickNo >= 13) {
             setPhase({ kind: "end", scores });
           } else {
-            setPhase({ kind: "play", trickNo: nextTrickNo, trick: { leadSuit: "♣", plays: [], leaderIdx: phase.winningIdx }, currentIdx: phase.winningIdx });
+            setPhase({ kind: "play-pass", trickNo: nextTrickNo, trick: { leadSuit: "♣", plays: [], leaderIdx: phase.winningIdx }, currentIdx: phase.winningIdx });
           }
         }} className="mt-8 w-full rounded-md bg-[hsl(var(--ember))] py-3 font-mono text-[11px] uppercase tracking-wider text-bg">
           {phase.trickNo + 1 >= 13 ? "See result →" : `${winner.name} leads next →`}
