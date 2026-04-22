@@ -4,11 +4,13 @@
 
 import type { Game } from "./types";
 import werewolf from "./werewolf";
+import spyfall from "./spyfall";
 
 export const GAMES: Game[] = [
   werewolf,
+  spyfall,
   // Coming soon:
-  // mafia, spyfall, charades, trivia, twotruths, neverhaveiever
+  // mafia, charades, trivia, twotruths, neverhaveiever
 ];
 
 export function getGame(id: string): Game | undefined {
