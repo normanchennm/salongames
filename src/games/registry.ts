@@ -20,6 +20,9 @@ import telephonepic from "./telephonepic";
 import insider from "./insider";
 import fishbowl from "./fishbowl";
 import escaperoom from "./escaperoom";
+import tictactoe from "./tictactoe";
+import connect4 from "./connect4";
+import hangman from "./hangman";
 
 export const GAMES: Game[] = [
   werewolf,
@@ -39,6 +42,9 @@ export const GAMES: Game[] = [
   neverhaveiever,
   wouldyourather,
   notstrangers,
+  tictactoe,
+  connect4,
+  hangman,
 ];
 
 export function getGame(id: string): Game | undefined {
