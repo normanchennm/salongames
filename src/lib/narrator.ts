@@ -72,3 +72,23 @@ export const WEREWOLF_CUES = {
   villageWins: "/narration/werewolf/village-wins.mp3",
   wolvesWin: "/narration/werewolf/wolves-win.mp3",
 } as const;
+
+/** Mafia cue registry. Town-themed counterpart to Werewolf. */
+export const MAFIA_CUES = {
+  roleMafia: "/narration/mafia/role-mafia.mp3",
+  roleTownsperson: "/narration/mafia/role-townsperson.mp3",
+  roleDetective: "/narration/mafia/role-detective.mp3",
+  roleDoctor: "/narration/mafia/role-doctor.mp3",
+  nightIntro: "/narration/mafia/night-intro.mp3",
+  nightMafia: "/narration/mafia/night-mafia.mp3",
+  nightDetective: "/narration/mafia/night-detective.mp3",
+  nightDoctor: "/narration/mafia/night-doctor.mp3",
+  dayKilled: "/narration/mafia/day-killed.mp3",
+  daySafe: "/narration/mafia/day-safe.mp3",
+  dayDiscuss: "/narration/mafia/day-discuss.mp3",
+  dayVote: "/narration/mafia/day-vote.mp3",
+  dayVotedOut: "/narration/mafia/day-voted-out.mp3",
+  dayTie: "/narration/mafia/day-tie.mp3",
+  townWins: "/narration/mafia/town-wins.mp3",
+  mafiaWins: "/narration/mafia/mafia-wins.mp3",
+} as const;

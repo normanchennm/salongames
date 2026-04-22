@@ -1,14 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
+import { playCue, MAFIA_CUES } from "@/lib/narrator";
 import { ROLES, defaultRoleMix, shuffle, type RoleId } from "./roles";
-
-// Mafia runs silent in the MVP — Werewolf's narration is
-// thematically wrong here (Daniel says "werewolves win"), and a
-// Mafia-specific narration pack isn't recorded yet. Leaving this
-// hook-free keeps the game fully playable; the shell's mute-toggle
-// is still visible in the header since other games (Werewolf) use it.
 
 /** Mafia pass-and-play MVP. Covers the full loop:
  *  lobby → secret role reveal → night phase → day discussion →
@@ -44,6 +39,28 @@ export const MafiaBoard: React.FC<GameComponentProps> = ({ players, onComplete, 
   const startedAt = useMemo(() => Date.now(), []);
   const [state, setState] = useState(() => initialState(players));
   const alive = state.players.filter((p) => p.alive);
+
+  // Narration cues fire when the phase changes. Mirrors Werewolf's
+  // wiring — missing MP3 = silent no-op.
+  useEffect(() => {
+    const kind = state.phase.kind;
+    if (kind === "night-intro") playCue(MAFIA_CUES.nightIntro);
+    else if (kind === "night-mafia") playCue(MAFIA_CUES.nightMafia);
+    else if (kind === "night-detective") playCue(MAFIA_CUES.nightDetective);
+    else if (kind === "night-doctor") playCue(MAFIA_CUES.nightDoctor);
+    else if (kind === "day-resolution") {
+      const p = state.phase as { kind: "day-resolution"; killedId: string | null };
+      playCue(p.killedId ? MAFIA_CUES.dayKilled : MAFIA_CUES.daySafe);
+    } else if (kind === "day-discussion") playCue(MAFIA_CUES.dayDiscuss);
+    else if (kind === "day-vote") playCue(MAFIA_CUES.dayVote);
+    else if (kind === "day-resolution-vote") {
+      const p = state.phase as { kind: "day-resolution-vote"; eliminatedId: string | null };
+      playCue(p.eliminatedId ? MAFIA_CUES.dayVotedOut : MAFIA_CUES.dayTie);
+    } else if (kind === "end") {
+      const p = state.phase as { kind: "end"; winningTeam: "town" | "mafia" };
+      playCue(p.winningTeam === "town" ? MAFIA_CUES.townWins : MAFIA_CUES.mafiaWins);
+    }
+  }, [state.phase.kind]);
 
   // --- win-check helper --- --------------------------------------
   function checkWin(players: PlayerState[]): "town" | "mafia" | null {
@@ -391,7 +408,20 @@ function RevealCard({ playerName, roleName, roleId, roleDescription, roleAccent,
       {!shown ? (
         <button
           type="button"
-          onClick={() => setShown(true)}
+          onClick={() => {
+            setShown(true);
+            // Role-reveal cue. Tap = user gesture so iOS autoplay
+            // policy accepts the MP3.
+            const cue =
+              roleId === "mafia"
+                ? MAFIA_CUES.roleMafia
+                : roleId === "detective"
+                  ? MAFIA_CUES.roleDetective
+                  : roleId === "doctor"
+                    ? MAFIA_CUES.roleDoctor
+                    : MAFIA_CUES.roleTownsperson;
+            playCue(cue);
+          }}
           className="mt-10 w-full rounded-md border border-[hsl(var(--ember)/0.4)] bg-[hsl(var(--ember)/0.08)] py-5 font-mono text-[11px] uppercase tracking-[0.2em] text-[hsl(var(--ember))] transition-colors hover:bg-[hsl(var(--ember)/0.16)]"
         >
           Reveal my role — only I should see
