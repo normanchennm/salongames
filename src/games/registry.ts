@@ -40,6 +40,7 @@ import mastermind from "./mastermind";
 import nmm from "./nmm";
 import mancala from "./mancala";
 import resistance from "./resistance";
+import coup from "./coup";
 
 export const GAMES: Game[] = [
   werewolf,
@@ -55,6 +56,7 @@ export const GAMES: Game[] = [
   trivia,
   fibbage,
   badanswers,
+  coup,
   codenames,
   telephonepic,
   charades,
