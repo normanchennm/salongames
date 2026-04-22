@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Search, X } from "lucide-react";
 import { GameCard } from "@/components/GameCard";
 import { DecorArt } from "@/components/DecorArt";
-import { loadDatingState } from "@/lib/persistence";
+import { loadDatingState, loadHistory } from "@/lib/persistence";
 import type { Game } from "@/games/types";
 
 /** Catalog browser with search, category filter, player-count filter,
@@ -13,6 +13,27 @@ import type { Game } from "@/games/types";
 type Category = Game["category"];
 type PlayerBand = "2" | "3-4" | "5-8" | "9+";
 type Sort = "name" | "time-asc" | "time-desc" | "players-asc" | "players-desc";
+type Tab = "popular" | "all";
+
+/** Editor-picked popular game ids — shown on the default "Popular" tab
+ *  of the catalog. Ordered roughly by broad appeal / newcomer friendliness
+ *  so the first row of the grid feels curated, not random.
+ *
+ *  As real play telemetry accumulates (see loadHistory), we blend that
+ *  in — if the device has played a game in the last N sessions, it gets
+ *  a popularity bump so the list adapts to actual use. */
+const POPULAR_IDS: string[] = [
+  "werewolf",        // the iconic social-deduction flagship
+  "codenames",       // crowd-pleaser, scales 4-10
+  "escaperoom",      // our unique-to-this-app moment
+  "fibbage",         // party hit with immediate feedback
+  "twotruths",       // universal, 2 minutes to teach
+  "wouldyourather",  // universal, no scoring drama
+  "avalon",          // deeper social deduction after people like Werewolf
+  "telephonepic",    // visual memento, viral-friendly
+  "charades",        // classic, zero-prep, scales
+  "chess",           // the eternal 2-player option
+];
 
 const CATEGORY_LABELS: Record<Category, string> = {
   "social-deduction": "Social Deduction",
@@ -35,20 +56,48 @@ function matchesPlayerBand(game: Game, band: PlayerBand): boolean {
 }
 
 export function CatalogBrowser({ games }: { games: Game[] }) {
+  const [tab, setTab] = useState<Tab>("popular");
   const [query, setQuery] = useState("");
   const [categories, setCategories] = useState<Set<Category>>(new Set());
   const [playerBand, setPlayerBand] = useState<PlayerBand | null>(null);
   const [sort, setSort] = useState<Sort>("name");
   const [datingMode, setDatingMode] = useState(false);
+  // Per-device play counts by game id; seeds "your favorites" bumps.
+  const [playCounts, setPlayCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     setDatingMode(loadDatingState().enabled);
+    const history = loadHistory();
+    const counts: Record<string, number> = {};
+    for (const r of history) counts[r.gameId] = (counts[r.gameId] ?? 0) + 1;
+    setPlayCounts(counts);
   }, []);
+
+  // If the user has any play history, default to "All" (they've been
+  // around) rather than the newcomer "Popular" landing view.
+  useEffect(() => {
+    if (Object.keys(playCounts).length >= 5) setTab("all");
+  }, [playCounts]);
+
+  // When searching or applying filters, auto-switch to the All tab so
+  // the user doesn't get empty results from a narrow curated list.
+  const anyFilter = query.trim() !== "" || categories.size > 0 || playerBand !== null;
 
   const filtered = useMemo(() => {
     // Adult-only games are hidden from the main catalog unless Dating
     // Mode is on (explicit 18+ opt-in on /date).
     let out = games.filter((g) => !g.adultOnly || datingMode);
+
+    // Popular tab: restrict to the curated list, plus any game this
+    // device has played 3+ times (your "favorites" floating up). If
+    // the user filters/searches, we show the full catalog to avoid
+    // frustrating empty states.
+    if (tab === "popular" && !anyFilter) {
+      const popularSet = new Set<string>(POPULAR_IDS);
+      for (const [id, n] of Object.entries(playCounts)) if (n >= 3) popularSet.add(id);
+      out = out.filter((g) => popularSet.has(g.id));
+    }
+
     if (query.trim()) {
       const q = query.trim().toLowerCase();
       out = out.filter((g) =>
@@ -70,8 +119,16 @@ export function CatalogBrowser({ games }: { games: Game[] }) {
       case "players-asc": out.sort((a, b) => a.minPlayers - b.minPlayers || a.maxPlayers - b.maxPlayers); break;
       case "players-desc": out.sort((a, b) => b.maxPlayers - a.maxPlayers || b.minPlayers - a.minPlayers); break;
     }
+    // On the Popular tab, reorder by the curated POPULAR_IDS sequence
+    // so the editor's intended hierarchy shows (unless the user picked
+    // a specific sort other than the default "name").
+    if (tab === "popular" && !anyFilter && sort === "name") {
+      const idx: Record<string, number> = {};
+      POPULAR_IDS.forEach((id, i) => { idx[id] = i; });
+      out.sort((a, b) => (idx[a.id] ?? 999) - (idx[b.id] ?? 999));
+    }
     return out;
-  }, [games, query, categories, playerBand, sort, datingMode]);
+  }, [games, query, categories, playerBand, sort, datingMode, tab, anyFilter, playCounts]);
 
   const toggleCategory = (cat: Category) => {
     const next = new Set(categories);
@@ -87,10 +144,19 @@ export function CatalogBrowser({ games }: { games: Game[] }) {
     setSort("name");
   };
 
-  const anyFilter = query.trim() !== "" || categories.size > 0 || playerBand !== null;
-
   return (
     <div>
+      {/* Tab row: Popular / All */}
+      <div className="mb-4 flex items-baseline gap-1 border-b border-border">
+        <TabButton active={tab === "popular"} onClick={() => setTab("popular")} label="Popular" />
+        <TabButton active={tab === "all"} onClick={() => setTab("all")} label={`All ${games.length}`} />
+        {tab === "popular" && (
+          <span className="ml-2 font-mono text-[10px] uppercase tracking-[0.2em] text-muted">
+            editor&apos;s picks
+          </span>
+        )}
+      </div>
+
       {/* Search + sort row */}
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
@@ -198,5 +264,22 @@ export function CatalogBrowser({ games }: { games: Game[] }) {
         </div>
       )}
     </div>
+  );
+}
+
+function TabButton({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`relative px-3 py-2 font-mono text-[11px] uppercase tracking-[0.2em] transition-colors ${
+        active ? "text-[hsl(var(--ember))]" : "text-muted hover:text-fg"
+      }`}
+    >
+      {label}
+      {active && (
+        <span aria-hidden className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-[hsl(var(--ember))]" />
+      )}
+    </button>
   );
 }
