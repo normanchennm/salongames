@@ -45,6 +45,9 @@ import sh from "./sh";
 import hearts from "./hearts";
 import spades from "./spades";
 import rummy from "./rummy";
+import backgammon from "./backgammon";
+import go from "./go";
+import chess from "./chess";
 
 export const GAMES: Game[] = [
   werewolf,
@@ -75,9 +78,12 @@ export const GAMES: Game[] = [
   tictactoe,
   connect4,
   checkers,
+  chess,
   reversi,
+  go,
   dotsboxes,
   battleship,
+  backgammon,
   hangman,
   wordle,
   liarsdice,
