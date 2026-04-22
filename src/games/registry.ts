@@ -41,6 +41,7 @@ import nmm from "./nmm";
 import mancala from "./mancala";
 import resistance from "./resistance";
 import coup from "./coup";
+import sh from "./sh";
 
 export const GAMES: Game[] = [
   werewolf,
@@ -49,6 +50,7 @@ export const GAMES: Game[] = [
   spyfall,
   avalon,
   resistance,
+  sh,
   insider,
   escaperoom,
   celebrity,
