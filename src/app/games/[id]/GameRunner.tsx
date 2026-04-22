@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PlayerRoster } from "@/components/PlayerRoster";
 import { getGame } from "@/games/registry";
 import type { GameResult, Player } from "@/games/types";
@@ -20,7 +20,26 @@ export function GameRunner({ gameId }: { gameId: string }) {
   const router = useRouter();
   const [players, setPlayers] = useState<Player[] | null>(null);
   const [instance, setInstance] = useState(0);
+  const gameStartedAt = useRef<number | null>(null);
   const settings = typeof window === "undefined" ? DEFAULT_SETTINGS : loadSettings();
+
+  // Stamp a start time whenever a fresh instance mounts — used to decide
+  // whether the quit button should confirm. A game under 10 seconds old
+  // is almost certainly "accidentally opened"; anything older deserves a
+  // confirm to prevent losing real progress.
+  useEffect(() => {
+    if (players) gameStartedAt.current = Date.now();
+  }, [players, instance]);
+
+  const handleQuit = () => {
+    const elapsed = gameStartedAt.current ? Date.now() - gameStartedAt.current : 0;
+    const inProgress = elapsed > 10_000;
+    if (inProgress && typeof window !== "undefined") {
+      const ok = window.confirm("Quit this game? Progress will be lost.");
+      if (!ok) return;
+    }
+    router.push("/");
+  };
 
   if (!players) {
     return (
@@ -50,12 +69,9 @@ export function GameRunner({ gameId }: { gameId: string }) {
       onComplete={(partial) => {
         const result: GameResult = { gameId: game.id, ...partial };
         appendHistory(result);
-        // Bump the key to force a clean remount for "play again same
-        // roster" — cheaper than threading a restart callback through
-        // every game's state machine.
         setInstance((i) => i + 1);
       }}
-      onQuit={() => router.push("/")}
+      onQuit={handleQuit}
     />
   );
 }
