@@ -415,18 +415,10 @@ function RevealCard({ playerName, roleName, roleId, roleDescription, roleAccent,
           type="button"
           onClick={() => {
             setShown(true);
-            // Fire the role-reveal narration when the player taps
-            // "Reveal." Tap is the user gesture Safari wants, so the
-            // cue plays reliably on iOS.
-            const cue =
-              roleId === "werewolf"
-                ? WEREWOLF_CUES.roleWerewolf
-                : roleId === "seer"
-                  ? WEREWOLF_CUES.roleSeer
-                  : roleId === "doctor"
-                    ? WEREWOLF_CUES.roleDoctor
-                    : WEREWOLF_CUES.roleVillager;
-            playCue(cue);
+            // No narration on role reveal — would leak the role to
+            // anyone near the phone ("you are a villager" is itself
+            // a tell). Role shows visually only.
+            void roleId;
           }}
           className="mt-10 w-full rounded-md border border-[hsl(var(--ember)/0.4)] bg-[hsl(var(--ember)/0.08)] py-5 font-mono text-[11px] uppercase tracking-[0.2em] text-[hsl(var(--ember))] transition-colors hover:bg-[hsl(var(--ember)/0.16)]"
         >

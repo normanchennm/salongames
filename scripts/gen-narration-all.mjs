@@ -30,10 +30,8 @@ if (!API_KEY) {
 // Game → list of [cue-slug, line-to-speak] entries.
 const GAMES = {
   werewolf: [
-    ["role-werewolf",   "You are a werewolf. Hunt in the night. Stay hidden in the day."],
-    ["role-villager",   "You are a villager. Survive the night. Find the wolves."],
-    ["role-seer",       "You are the seer. See the truth others cannot."],
-    ["role-doctor",     "You are the doctor. Protect one soul each night."],
+    // No role cues — narrating the role at reveal leaks it to anyone
+    // near the phone. Role shows visually only.
     ["night-intro",     "Night falls on the village. Everyone, close your eyes."],
     ["night-wolf",      "Werewolves. Open your eyes. Silently choose your victim."],
     ["night-seer",      "Seer. Open your eyes. Learn one player's truth."],
@@ -48,10 +46,8 @@ const GAMES = {
     ["wolves-win",      "The wolves have won. The village is no more."],
   ],
   mafia: [
-    ["role-mafia",       "You are Mafia. Eliminate the town, one by one."],
-    ["role-townsperson", "You are an ordinary townsperson. Find the Mafia. Survive."],
-    ["role-detective",   "You are the Detective. Each night, investigate one soul."],
-    ["role-doctor",      "You are the Doctor. Each night, save one soul."],
+    // No role cues — narrating the role leaks it at the table. Role
+    // shows visually only.
     ["night-intro",      "The town sleeps. Everyone, close your eyes."],
     ["night-mafia",      "Mafia. Wake up. Quietly choose your target."],
     ["night-detective",  "Detective. Wake up. Investigate one player."],

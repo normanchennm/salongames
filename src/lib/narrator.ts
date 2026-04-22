@@ -53,12 +53,12 @@ export function playCue(path: string): Promise<void> {
 
 /** Werewolf cue registry. Maps phase events to MP3 paths. The
  *  /public/narration/werewolf/ directory holds the matching files.
- *  Missing files silently no-op (see playCue). */
+ *  Missing files silently no-op (see playCue).
+ *
+ *  No role-reveal cues — narrating "you are a villager" at reveal
+ *  would leak the role to anyone near the phone (even villager
+ *  being named is itself a tell). Role shows visually only. */
 export const WEREWOLF_CUES = {
-  roleWerewolf: "/narration/werewolf/role-werewolf.mp3",
-  roleVillager: "/narration/werewolf/role-villager.mp3",
-  roleSeer: "/narration/werewolf/role-seer.mp3",
-  roleDoctor: "/narration/werewolf/role-doctor.mp3",
   nightIntro: "/narration/werewolf/night-intro.mp3",
   nightWolf: "/narration/werewolf/night-wolf.mp3",
   nightSeer: "/narration/werewolf/night-seer.mp3",
@@ -73,12 +73,9 @@ export const WEREWOLF_CUES = {
   wolvesWin: "/narration/werewolf/wolves-win.mp3",
 } as const;
 
-/** Mafia cue registry. Town-themed counterpart to Werewolf. */
+/** Mafia cue registry. Town-themed counterpart to Werewolf. No role
+ *  cues for the same privacy reason as Werewolf. */
 export const MAFIA_CUES = {
-  roleMafia: "/narration/mafia/role-mafia.mp3",
-  roleTownsperson: "/narration/mafia/role-townsperson.mp3",
-  roleDetective: "/narration/mafia/role-detective.mp3",
-  roleDoctor: "/narration/mafia/role-doctor.mp3",
   nightIntro: "/narration/mafia/night-intro.mp3",
   nightMafia: "/narration/mafia/night-mafia.mp3",
   nightDetective: "/narration/mafia/night-detective.mp3",

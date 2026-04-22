@@ -413,17 +413,9 @@ function RevealCard({ playerName, roleName, roleId, roleDescription, roleAccent,
           type="button"
           onClick={() => {
             setShown(true);
-            // Role-reveal cue. Tap = user gesture so iOS autoplay
-            // policy accepts the MP3.
-            const cue =
-              roleId === "mafia"
-                ? MAFIA_CUES.roleMafia
-                : roleId === "detective"
-                  ? MAFIA_CUES.roleDetective
-                  : roleId === "doctor"
-                    ? MAFIA_CUES.roleDoctor
-                    : MAFIA_CUES.roleTownsperson;
-            playCue(cue);
+            // No narration on role reveal — would leak the role to
+            // anyone near the phone. Role shows visually only.
+            void roleId;
           }}
           className="mt-10 w-full rounded-md border border-[hsl(var(--ember)/0.4)] bg-[hsl(var(--ember)/0.08)] py-5 font-mono text-[11px] uppercase tracking-[0.2em] text-[hsl(var(--ember))] transition-colors hover:bg-[hsl(var(--ember)/0.16)]"
         >
