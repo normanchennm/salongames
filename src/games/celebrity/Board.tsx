@@ -76,10 +76,10 @@ export const CelebrityBoard: React.FC<GameComponentProps> = ({ players, onComple
       <section className="mx-auto max-w-md animate-fade-up text-center">
         <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-[hsl(var(--ember))]">How it works</p>
         <h2 className="mt-2 font-display text-3xl italic leading-tight">
-          Each player adds {NAMES_PER_PLAYER} names to the hat.
+          Each player adds {NAMES_PER_PLAYER} entries to the hat.
         </h2>
         <p className="mt-4 text-sm leading-relaxed text-muted">
-          Real, fictional, living, dead — anyone the table would recognize. Pass the phone and type privately. Three rounds follow: describe, one word, charades.
+          Names, words, or phrases — anything the table would recognize. Pass the phone and type privately. Three rounds follow: describe, one word, charades.
         </p>
         <button
           type="button"
@@ -101,9 +101,9 @@ export const CelebrityBoard: React.FC<GameComponentProps> = ({ players, onComple
         <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted">
           Pass to {current.name} — privately
         </p>
-        <h2 className="mt-2 font-display text-3xl italic">Add {NAMES_PER_PLAYER} names.</h2>
+        <h2 className="mt-2 font-display text-3xl italic">Add {NAMES_PER_PLAYER} entries.</h2>
         <p className="mt-2 text-sm text-muted">
-          Nobody else should see. Pick names the table will know — mix obvious and tricky.
+          Nobody else should see. Names, words, or phrases the table will know — mix obvious and tricky.
         </p>
         <div className="mt-6 space-y-3">
           {phase.names.map((n, i) => (
@@ -116,7 +116,7 @@ export const CelebrityBoard: React.FC<GameComponentProps> = ({ players, onComple
                 next[i] = e.target.value;
                 setPhase({ ...phase, names: next });
               }}
-              placeholder={`Name ${i + 1}`}
+              placeholder={`Entry ${i + 1}`}
               maxLength={50}
               className="w-full rounded-md border border-border bg-bg px-3 py-2.5 font-mono text-sm text-fg outline-none placeholder:text-muted/60 focus:border-[hsl(var(--ember)/0.5)]"
             />

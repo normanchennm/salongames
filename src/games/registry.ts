@@ -18,6 +18,7 @@ import fibbage from "./fibbage";
 import badanswers from "./badanswers";
 import telephonepic from "./telephonepic";
 import insider from "./insider";
+import fishbowl from "./fishbowl";
 
 export const GAMES: Game[] = [
   werewolf,
@@ -26,6 +27,7 @@ export const GAMES: Game[] = [
   avalon,
   insider,
   celebrity,
+  fishbowl,
   trivia,
   fibbage,
   badanswers,
