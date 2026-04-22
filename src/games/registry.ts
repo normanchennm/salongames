@@ -42,6 +42,7 @@ import mancala from "./mancala";
 import resistance from "./resistance";
 import coup from "./coup";
 import sh from "./sh";
+import hearts from "./hearts";
 
 export const GAMES: Game[] = [
   werewolf,
@@ -59,6 +60,7 @@ export const GAMES: Game[] = [
   fibbage,
   badanswers,
   coup,
+  hearts,
   codenames,
   telephonepic,
   charades,
