@@ -8,19 +8,25 @@ import mafia from "./mafia";
 import spyfall from "./spyfall";
 import avalon from "./avalon";
 import charades from "./charades";
+import celebrity from "./celebrity";
 import trivia from "./trivia";
 import twotruths from "./twotruths";
 import neverhaveiever from "./neverhaveiever";
+import wouldyourather from "./wouldyourather";
+import notstrangers from "./notstrangers";
 
 export const GAMES: Game[] = [
   werewolf,
   mafia,
   spyfall,
   avalon,
+  celebrity,
   trivia,
   charades,
   twotruths,
   neverhaveiever,
+  wouldyourather,
+  notstrangers,
 ];
 
 export function getGame(id: string): Game | undefined {
