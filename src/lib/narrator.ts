@@ -146,6 +146,17 @@ export const RESISTANCE_CUES = {
   spiesWin: "/narration/resistance/spies-win.mp3",
 } as const;
 
+/** Escape Rooms — atmospheric narration. Each room gets an intro, a
+ *  per-scene enter cue reading the scene prose aloud, a per-scene
+ *  solved cue, and an outro. Paths are computed from room + scene id
+ *  so the component can look them up without re-declaring each. */
+export function escapeRoomCue(room: string, beat: "intro" | "outro" | "correct" | "wrong"): string;
+export function escapeRoomCue(room: string, beat: "scene" | "solved", sceneId: string): string;
+export function escapeRoomCue(room: string, beat: string, sceneId?: string): string {
+  if (sceneId) return `/narration/escaperoom/${room}/${sceneId}-${beat}.mp3`;
+  return `/narration/escaperoom/${room}/${beat}.mp3`;
+}
+
 /** Chancellor (Secret Hitler) — legislative drama, policy enacts,
  *  dramatic votes. */
 export const SH_CUES = {
@@ -155,4 +166,39 @@ export const SH_CUES = {
   fascistPolicy: "/narration/sh/fascist-policy.mp3",
   liberalsWin: "/narration/sh/liberals-win.mp3",
   fascistsWin: "/narration/sh/fascists-win.mp3",
+} as const;
+
+/** Fibbage — game-show truth-reveal drama. */
+export const FIBBAGE_CUES = {
+  roundStart: "/narration/fibbage/round-start.mp3",
+  truthReveal: "/narration/fibbage/truth-reveal.mp3",
+  allBluffed: "/narration/fibbage/all-bluffed.mp3",
+  someoneNailedIt: "/narration/fibbage/someone-nailed-it.mp3",
+  winner: "/narration/fibbage/winner.mp3",
+} as const;
+
+/** Coup — challenge + reveal drama. */
+export const COUP_CUES = {
+  challenge: "/narration/coup/challenge.mp3",
+  bluffCaught: "/narration/coup/bluff-caught.mp3",
+  truthful: "/narration/coup/truthful.mp3",
+  loseInfluence: "/narration/coup/lose-influence.mp3",
+  lastStanding: "/narration/coup/last-standing.mp3",
+} as const;
+
+/** Code Names — tense tap moments. */
+export const CODENAMES_CUES = {
+  assassin: "/narration/codenames/assassin.mp3",
+  contact: "/narration/codenames/contact.mp3",
+  bystander: "/narration/codenames/bystander.mp3",
+  teamAWins: "/narration/codenames/team-a-wins.mp3",
+  teamBWins: "/narration/codenames/team-b-wins.mp3",
+} as const;
+
+/** Liar's Dice — showdown beats. */
+export const LIARSDICE_CUES = {
+  callLiar: "/narration/liarsdice/call-liar.mp3",
+  bidHolds: "/narration/liarsdice/bid-holds.mp3",
+  bluffCaught: "/narration/liarsdice/bluff-caught.mp3",
+  winner: "/narration/liarsdice/winner.mp3",
 } as const;

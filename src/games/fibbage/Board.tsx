@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { GameComponentProps, Player } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
 import { type FibPrompt, pickPrompts } from "./prompts";
+import { playCue, FIBBAGE_CUES } from "@/lib/narrator";
 
 /** Fibbage — pass-and-play bluffing trivia.
  *
@@ -127,6 +128,17 @@ export const FibbageBoard: React.FC<GameComponentProps> = ({ players, onComplete
       ("authorIndex" in phase ? `-a${phase.authorIndex}` : "") +
       ("voterIndex" in phase ? `-v${phase.voterIndex}` : ""),
   );
+
+  useEffect(() => {
+    if (phase.kind === "bluff-pass" && phase.authorIndex === 0) playCue(FIBBAGE_CUES.roundStart);
+    else if (phase.kind === "reveal") {
+      const anyTruthVote = Object.values(phase.votes).some((id) => phase.options.find((o) => o.id === id)?.isTruth);
+      playCue(FIBBAGE_CUES.truthReveal);
+      setTimeout(() => playCue(anyTruthVote ? FIBBAGE_CUES.someoneNailedIt : FIBBAGE_CUES.allBluffed), 3500);
+    } else if (phase.kind === "end") {
+      playCue(FIBBAGE_CUES.winner);
+    }
+  }, [phase]);
 
   function finishGame(scores: Scores) {
     const max = Math.max(...Object.values(scores), 0);

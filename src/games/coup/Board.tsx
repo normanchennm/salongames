@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
 import { RoleArt } from "@/components/RoleArt";
+import { playCue, COUP_CUES } from "@/lib/narrator";
 
 /** Coup — 2-6p bluffing card game with hidden characters.
  *
@@ -96,6 +97,13 @@ export const CoupBoard: React.FC<GameComponentProps> = ({ players, onComplete, o
   });
   const [phase, setPhase] = useState<Phase>({ kind: "intro" });
   useScrollToTop(phase.kind + ("playerIdx" in phase ? `-${phase.playerIdx}` : "") + ("turnIdx" in core ? `-${core.turnIdx}` : ""));
+
+  useEffect(() => {
+    if (phase.kind === "challenge-prompt") playCue(COUP_CUES.challenge);
+    else if (phase.kind === "challenge-reveal") playCue(phase.hadIt ? COUP_CUES.truthful : COUP_CUES.bluffCaught);
+    else if (phase.kind === "lose-influence-pass") playCue(COUP_CUES.loseInfluence);
+    else if (phase.kind === "end") playCue(COUP_CUES.lastStanding);
+  }, [phase]);
 
   if (players.length < 2 || players.length > 6) {
     return (

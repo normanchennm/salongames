@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { GameComponentProps, Player } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
 import { CODENAMES_WORDS } from "./words";
+import { playCue, CODENAMES_CUES } from "@/lib/narrator";
 
 /** Codenames — partnership word deduction on a 5x5 grid.
  *
@@ -63,6 +64,13 @@ export const CodenamesBoard: React.FC<GameComponentProps> = ({ players, onComple
   const startedAt = useMemo(() => Date.now(), []);
   const [phase, setPhase] = useState<Phase>({ kind: "roster" });
   useScrollToTop(phase.kind + ("team" in phase ? `-${phase.team}` : ""));
+
+  useEffect(() => {
+    if (phase.kind === "end") {
+      if (phase.reason.toLowerCase().includes("assassin")) playCue(CODENAMES_CUES.assassin);
+      else playCue(phase.winner === "A" ? CODENAMES_CUES.teamAWins : CODENAMES_CUES.teamBWins);
+    }
+  }, [phase]);
 
   function autoRoster(): Roster {
     const half = Math.ceil(players.length / 2);

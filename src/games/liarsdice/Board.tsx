@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
+import { playCue, LIARSDICE_CUES } from "@/lib/narrator";
 
 /** Liar's Dice — pass-and-play bluffing dice.
  *
@@ -71,6 +72,16 @@ export const LiarsDiceBoard: React.FC<GameComponentProps> = ({ players, onComple
     return { kind: "round-intro", round: 0, bags, currentIdx: 0 };
   });
   useScrollToTop(phase.kind + ("round" in phase ? `-${phase.round}` : "") + ("revealIdx" in phase ? `-${phase.revealIdx}` : ""));
+
+  useEffect(() => {
+    if (phase.kind === "reveal-all") {
+      playCue(LIARSDICE_CUES.callLiar);
+      const holds = phase.total >= phase.bid.quantity;
+      setTimeout(() => playCue(holds ? LIARSDICE_CUES.bidHolds : LIARSDICE_CUES.bluffCaught), 2500);
+    } else if (phase.kind === "end") {
+      playCue(LIARSDICE_CUES.winner);
+    }
+  }, [phase]);
 
   function finish(winnerId: string) {
     onComplete({

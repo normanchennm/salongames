@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
 import { ROOMS, getRoom } from "./rooms";
 import type { Puzzle, Room, Scene } from "./types";
+import { escapeRoomCue, playCue } from "@/lib/narrator";
 
 /** Escape room engine. Cooperative single-device: one phone passed
  *  around the table, everyone reads and discusses. There's no
@@ -165,6 +166,23 @@ export const EscapeRoomBoard: React.FC<GameComponentProps> = ({ players, onCompl
   const startedAt = useMemo(() => Date.now(), []);
   const [phase, setPhase] = useState<Phase>({ kind: "pick-room" });
   useScrollToTop(phase.kind + ("sceneIndex" in phase ? `-${phase.sceneIndex}` : ""));
+
+  // Atmospheric narration — reads the room intro, each scene prose on
+  // entry, each solved beat, and the outro. MP3s live under
+  // /narration/escaperoom/<room>/; missing files silently no-op.
+  useEffect(() => {
+    if (phase.kind === "intro") {
+      playCue(escapeRoomCue(phase.room.id, "intro"));
+    } else if (phase.kind === "scene") {
+      const scene = phase.room.scenes[phase.sceneIndex];
+      playCue(escapeRoomCue(phase.room.id, "scene", scene.id));
+    } else if (phase.kind === "scene-solved") {
+      const scene = phase.room.scenes[phase.sceneIndex];
+      playCue(escapeRoomCue(phase.room.id, "solved", scene.id));
+    } else if (phase.kind === "outro") {
+      playCue(escapeRoomCue(phase.room.id, "outro"));
+    }
+  }, [phase]);
 
   function finishGame(roomName: string, hintsUsed: number) {
     onComplete({

@@ -112,6 +112,69 @@ const GAMES = {
     ["liberals-win",      "Five liberal policies. Democracy holds."],
     ["fascists-win",      "The fascists have seized control."],
   ],
+
+  // ── Escape Rooms ───────────────────────────────────────────────────
+  // Output layout: public/narration/escaperoom/<room>/<slug>.mp3
+  // Slugs are <sceneId>-scene for entry prose, <sceneId>-solved for
+  // solve beats, plus 'intro' and 'outro'. Narration tone: storyteller,
+  // a shade dramatic — sits closer to the escape-room audio cues you'd
+  // hear in a real venue.
+
+  fibbage: [
+    ["round-start",       "New round. One real trivia question. Write your bluff."],
+    ["truth-reveal",      "The truth."],
+    ["all-bluffed",       "No one got it. Bluffers reign."],
+    ["someone-nailed-it", "Someone found the truth."],
+    ["winner",            "And we have a winner."],
+  ],
+  coup: [
+    ["challenge",     "Challenge."],
+    ["bluff-caught",  "Bluff called. Lose influence."],
+    ["truthful",      "The truth. Challenger loses influence."],
+    ["lose-influence","Flip a card. Face up."],
+    ["last-standing", "Only one remains. The throne is yours."],
+  ],
+  codenames: [
+    ["assassin",    "The assassin. Game over."],
+    ["contact",     "Contact."],
+    ["bystander",   "An innocent. Turn over."],
+    ["team-a-wins", "Team A has them all. Game."],
+    ["team-b-wins", "Team B has them all. Game."],
+  ],
+  liarsdice: [
+    ["call-liar",    "Liar. Reveal all dice."],
+    ["bid-holds",    "The bid holds. Caller loses a die."],
+    ["bluff-caught", "Bluff exposed. Bidder loses a die."],
+    ["winner",       "Last dice standing. The round is yours."],
+  ],
+
+  "escaperoom/antiquarian": [
+    ["intro",             "You came in at closing to pick up a wrapped parcel. The bolt falls behind you. Your phone has one bar. The shop is dark. A note on the counter."],
+    ["front-scene",        "The counter is cluttered with ledgers and the smell of old leather. Spidery handwriting: 'Back in the morning. The front key is hidden exactly where the old man kept it — somewhere the sun always touched.'"],
+    ["front-solved",       "The brass key is cold and dull. The front door refuses you — of course. But the inner door clicks softly."],
+    ["clockroom-scene",    "A narrow room lined with pendulum clocks. All stopped. Only one is running — a grandfather with a cracked glass face. Its hands read 2:45. Above it, in gilt: 'The truth runs backward here.'"],
+    ["clockroom-solved",   "The keypad sinks inward. Behind you, a bookcase exhales a quiet click and shifts half an inch."],
+    ["library-scene",      "You squeeze through. A small library, one chair, a reading lamp burning low. Four books on a lectern, each with a single red number painted on its spine."],
+    ["library-solved",     "The dial whirs. A drawer slides open beneath the lectern — the parcel you came for, and something else."],
+    ["mirror-scene",       "The drawer holds a small silver oval mirror. Your reflection mouths a question. Four names rise in the glass. You recognize the last."],
+    ["mirror-solved",      "The mirror goes clear. Somewhere far behind you, the front door unbolts itself."],
+    ["outro",              "The bell above the door rings as you step into wet pavement. The shop windows behind you go dark. Your parcel is heavier than it should be."],
+  ],
+
+  "escaperoom/lastreservation": [
+    ["intro",              "The Parkhurst Hotel. December, nineteen-twenty-eight. A snowstorm. Jazz still playing. Room four-fourteen: Mister Halloran, oil man from Tulsa, slumped over his writing desk. No sign of struggle. Dawn in six hours. Sort it before the police arrive."],
+    ["crimescene-scene",   "Halloran slumped forward, pen in hand. A glass of bourbon, mostly full. The inkwell is overturned across an unsigned contract. His sleeve is wet — not with ink. A faint smell of bitter almonds."],
+    ["crimescene-solved",  "You jot these down. Almonds: poisoned drink. Unsigned contract: stopped mid-signature. Damp sleeve: a struggle."],
+    ["lenore-scene",       "Miss Lenore is fixing her face in the mirror. 'Halloran. Terrible. I sang for him Tuesday and Wednesday. Last night I was on stage until two.'"],
+    ["lenore-solved",      "The band confirms her alibi. But she hands you a thread: the contract man."],
+    ["dray-scene",         "Mister Dray eats breakfast in his robe. 'Good man. Sloppy drunk. He wanted to add a clause that cut me out — I told him to sleep on it. I was with Mister Ng in the card room till three.'"],
+    ["dray-solved",        "The alibi holds. But his bandaged left hand does not match the story he's telling."],
+    ["jimmy-scene",        "Jimmy is seventeen and sweating. 'I brought Mister Halloran his drink at eleven. Signed the bill and I left.' He looks everywhere except at you."],
+    ["jimmy-solved",       "Jimmy cracks. He went back at eleven-thirty to fetch the unsigned bill. Door was cracked. Halloran was already slumped. Someone with a bandaged hand was pulling the door shut behind him."],
+    ["accusation-scene",   "Dawn is thirty minutes off. Witnesses in the lounge. Manager at the door. You draw it out. Halloran was killed before he could sign. The killer has a bandage. The alibi was bought."],
+    ["accusation-solved",  "Dray goes very still. The manager closes the door. A quiet arrangement is made."],
+    ["outro",              "The dining room empties as dawn breaks. The manager slips you an envelope. 'Discreet and correct. Nobody forgets that combination.' Outside, the snow is finally stopping."],
+  ],
 };
 
 const VOICE_SETTINGS = {
