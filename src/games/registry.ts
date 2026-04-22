@@ -39,6 +39,7 @@ import rpsls from "./rpsls";
 import mastermind from "./mastermind";
 import nmm from "./nmm";
 import mancala from "./mancala";
+import resistance from "./resistance";
 
 export const GAMES: Game[] = [
   werewolf,
@@ -46,6 +47,7 @@ export const GAMES: Game[] = [
   mafia,
   spyfall,
   avalon,
+  resistance,
   insider,
   escaperoom,
   celebrity,
