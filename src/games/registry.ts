@@ -17,12 +17,14 @@ import notstrangers from "./notstrangers";
 import fibbage from "./fibbage";
 import badanswers from "./badanswers";
 import telephonepic from "./telephonepic";
+import insider from "./insider";
 
 export const GAMES: Game[] = [
   werewolf,
   mafia,
   spyfall,
   avalon,
+  insider,
   celebrity,
   trivia,
   fibbage,
