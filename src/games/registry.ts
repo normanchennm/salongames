@@ -33,6 +33,7 @@ import battleship from "./battleship";
 import pig from "./pig";
 import farkle from "./farkle";
 import codenames from "./codenames";
+import yahtzee from "./yahtzee";
 
 export const GAMES: Game[] = [
   werewolf,
@@ -65,6 +66,7 @@ export const GAMES: Game[] = [
   liarsdice,
   pig,
   farkle,
+  yahtzee,
 ];
 
 export function getGame(id: string): Game | undefined {
