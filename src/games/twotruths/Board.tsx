@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { GameComponentProps, Player } from "@/games/types";
+import { useScrollToTop } from "@/lib/useScrollToTop";
 
 /** Two Truths and a Lie, pass-and-play.
  *
@@ -35,6 +36,9 @@ export const TwoTruthsBoard: React.FC<GameComponentProps> = ({ players, onComple
     statements: ["", "", ""],
     lieIndex: null,
   });
+  useScrollToTop(
+    phase.kind + ("turnIndex" in phase ? `-${phase.turnIndex}` : ""),
+  );
 
   if (phase.kind === "end") {
     const sorted = Object.entries(scores).sort(([, a], [, b]) => b - a);

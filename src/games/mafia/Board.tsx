@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
 import { playCue, MAFIA_CUES } from "@/lib/narrator";
+import { useScrollToTop } from "@/lib/useScrollToTop";
 import { ROLES, defaultRoleMix, shuffle, type RoleId } from "./roles";
 
 /** Mafia pass-and-play MVP. Covers the full loop:
@@ -39,6 +40,7 @@ export const MafiaBoard: React.FC<GameComponentProps> = ({ players, onComplete, 
   const startedAt = useMemo(() => Date.now(), []);
   const [state, setState] = useState(() => initialState(players));
   const alive = state.players.filter((p) => p.alive);
+  useScrollToTop(state.phase.kind + (state.phase.kind === "reveal" ? String(state.phase.current) : ""));
 
   // Narration cues fire when the phase changes. Mirrors Werewolf's
   // wiring — missing MP3 = silent no-op.

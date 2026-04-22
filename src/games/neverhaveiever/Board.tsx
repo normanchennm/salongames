@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
+import { useScrollToTop } from "@/lib/useScrollToTop";
 import { NHIE_PROMPTS } from "./prompts";
 
 /** Never Have I Ever — simplest possible shape. Shuffle the prompts,
@@ -21,6 +22,7 @@ export const NeverHaveIEverBoard: React.FC<GameComponentProps> = ({ players, onC
   }, []);
   const [index, setIndex] = useState(0);
   const atEnd = index >= shuffled.length;
+  useScrollToTop(index);
 
   if (atEnd) {
     return (

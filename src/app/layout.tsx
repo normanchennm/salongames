@@ -67,6 +67,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Wordmark variant="inline" size="md" href="/" />
             <nav className="flex items-center gap-5 font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
               <a href="/" className="transition-colors hover:text-fg">Games</a>
+              <a href="/stats/" className="transition-colors hover:text-fg">Stats</a>
               <a href="/about/" className="transition-colors hover:text-fg">About</a>
               <MuteToggle />
             </nav>

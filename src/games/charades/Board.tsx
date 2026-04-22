@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
+import { useScrollToTop } from "@/lib/useScrollToTop";
 import { randomPrompt, type Prompt } from "./prompts";
 
 /** Charades — rotating actor, per-prompt 60-second timer, scoring by
@@ -24,6 +25,7 @@ export const CharadesBoard: React.FC<GameComponentProps> = ({ players, onComplet
     Object.fromEntries(players.map((p) => [p.id, 0])),
   );
   const [phase, setPhase] = useState<Phase>({ kind: "actor-reveal", actorIndex: 0 });
+  useScrollToTop(phase.kind + ("actorIndex" in phase ? String(phase.actorIndex) : ""));
   const [activePrompt, setActivePrompt] = useState<Prompt | null>(null);
 
   // Ticking clock for the playing phase.

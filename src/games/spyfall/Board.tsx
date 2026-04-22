@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
+import { useScrollToTop } from "@/lib/useScrollToTop";
 import { LOCATIONS, randomLocation, randomRole, type Location } from "./locations";
 
 /** Spyfall — pass-and-play MVP.
@@ -45,6 +46,7 @@ export const SpyfallBoard: React.FC<GameComponentProps> = ({ players, onComplete
     }));
   });
   const [phase, setPhase] = useState<Phase>({ kind: "reveal", current: 0 });
+  useScrollToTop(phase.kind + (phase.kind === "reveal" ? String(phase.current) : ""));
 
   // Ticking clock state for the discussion phase. Recomputed every
   // second while that phase is active; cheap, doesn't affect other

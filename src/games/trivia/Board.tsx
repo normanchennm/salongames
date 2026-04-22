@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
+import { useScrollToTop } from "@/lib/useScrollToTop";
 import { pickRound, type Question } from "./questions";
 
 /** Trivia — rotating reader, tap-to-answer.
@@ -30,6 +31,9 @@ export const TriviaBoard: React.FC<GameComponentProps> = ({ players, onComplete,
     Object.fromEntries(players.map((p) => [p.id, 0])),
   );
   const [phase, setPhase] = useState<Phase>({ kind: "question", index: 0, revealed: false, correctScorerId: null });
+  useScrollToTop(
+    phase.kind + ("index" in phase ? `-${phase.index}-${phase.revealed}` : ""),
+  );
 
   if (phase.kind === "end") {
     const sorted = Object.entries(scores).sort(([, a], [, b]) => b - a);
