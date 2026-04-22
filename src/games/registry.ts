@@ -32,6 +32,7 @@ import checkers from "./checkers";
 import battleship from "./battleship";
 import pig from "./pig";
 import farkle from "./farkle";
+import codenames from "./codenames";
 
 export const GAMES: Game[] = [
   werewolf,
@@ -46,6 +47,7 @@ export const GAMES: Game[] = [
   trivia,
   fibbage,
   badanswers,
+  codenames,
   telephonepic,
   charades,
   twotruths,
