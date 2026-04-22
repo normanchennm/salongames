@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
+import { RoleArt } from "@/components/RoleArt";
+import { EndScreenArt } from "@/components/EndScreenArt";
 
 /** Secret Hitler (simplified MVP). 5-10p hidden-team policy game.
  *
@@ -155,6 +157,7 @@ export const SecretHitlerBoard: React.FC<GameComponentProps> = ({ players, onCom
       <section className="mx-auto max-w-md animate-fade-up text-center">
         <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-muted">{p.name}, your role</p>
         <div className="mt-6 rounded-lg border border-[hsl(var(--ember)/0.5)] bg-[hsl(var(--ember)/0.08)] px-6 py-8">
+          <RoleArt game="sh" role={role} fallback={["#1a1a2a", "#100d0b"]} className="aspect-[4/3] w-full mb-4" />
           <h2 className={`font-display text-4xl italic ${role === "liberal" ? "text-[#4a8abb]" : "text-[hsl(var(--ember))]"}`}>{roleLabel}</h2>
           {fascistTeammates.length > 0 && (
             <div className="mt-4 text-sm text-muted">
@@ -456,6 +459,7 @@ export const SecretHitlerBoard: React.FC<GameComponentProps> = ({ players, onCom
   const winnerIds = players.filter((p) => phase.winner === "liberal" ? isLib(roles[p.id]) : !isLib(roles[p.id])).map((p) => p.id);
   return (
     <section className="mx-auto max-w-md animate-fade-up text-center">
+      <EndScreenArt game="sh" outcome={phase.winner === "liberal" ? "liberal-wins" : "fascist-wins"} fallback={["#1a1a2a", "#100d0b"]} className="aspect-[16/9] w-full mb-4" />
       <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-muted">Verdict</p>
       <h2 className={`mt-2 font-display text-5xl italic ${phase.winner === "liberal" ? "text-[#4a8abb]" : "text-[hsl(var(--ember))]"}`}>
         {phase.winner === "liberal" ? "Liberals win." : "Fascists win."}

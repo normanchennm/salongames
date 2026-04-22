@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
+import { RoleArt } from "@/components/RoleArt";
+import { EndScreenArt } from "@/components/EndScreenArt";
 
 /** The Resistance — 5-10 player hidden-team mission game.
  *
@@ -125,6 +127,7 @@ export const ResistanceBoard: React.FC<GameComponentProps> = ({ players, onCompl
       <section className="mx-auto max-w-md animate-fade-up text-center">
         <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-muted">{p.name}, you are</p>
         <div className="mt-6 rounded-lg border border-[hsl(var(--ember)/0.5)] bg-[hsl(var(--ember)/0.08)] px-6 py-8">
+          <RoleArt game="resistance" role={isSpy ? "spy" : "resistance"} fallback={["#2a1a2a", "#100d0b"]} className="aspect-[4/3] w-full mb-4" />
           <h2 className="font-display text-4xl italic text-[hsl(var(--ember))]">{isSpy ? "Spy" : "Resistance"}</h2>
           {isSpy && spyNames.length > 0 && (
             <p className="mt-3 text-sm text-muted">Your fellow spies: <span className="text-fg">{spyNames.join(", ")}</span></p>
@@ -403,6 +406,7 @@ export const ResistanceBoard: React.FC<GameComponentProps> = ({ players, onCompl
   const winnerIds = players.filter((p) => (winnerTeam === "resistance" ? roles[p.id] === "resistance" : roles[p.id] === "spy")).map((p) => p.id);
   return (
     <section className="mx-auto max-w-md animate-fade-up text-center">
+      <EndScreenArt game="resistance" outcome={winnerTeam === "resistance" ? "resistance-wins" : "spies-win"} fallback={["#2a1a2a", "#100d0b"]} className="aspect-[16/9] w-full mb-4" />
       <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-muted">Verdict</p>
       <h2 className="mt-2 font-display text-5xl italic text-[hsl(var(--ember))]">
         {winnerTeam === "resistance" ? "Resistance wins." : "Spies win."}

@@ -5,6 +5,7 @@ import type { GameComponentProps } from "@/games/types";
 import { playCue, MAFIA_CUES } from "@/lib/narrator";
 import { useScrollToTop } from "@/lib/useScrollToTop";
 import { ROLES, defaultRoleMix, shuffle, type RoleId } from "./roles";
+import { RoleArt } from "@/components/RoleArt";
 
 /** Mafia pass-and-play MVP. Covers the full loop:
  *  lobby → secret role reveal → night phase → day discussion →
@@ -430,6 +431,7 @@ function RevealCard({ playerName, roleName, roleId, roleDescription, roleAccent,
         </button>
       ) : (
         <div className="mt-10 rounded-md border px-6 py-8" style={{ borderColor: roleAccent }}>
+          <RoleArt game="mafia" role={roleId} fallback={["#1a1008", "#100d0b"]} className="aspect-[4/3] w-full mb-4" />
           <div className="font-mono text-[10px] uppercase tracking-[0.3em]" style={{ color: roleAccent }}>
             your role
           </div>

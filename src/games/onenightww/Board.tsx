@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import type { GameComponentProps, Player } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
+import { RoleArt } from "@/components/RoleArt";
+import { EndScreenArt } from "@/components/EndScreenArt";
 
 /** One Night Ultimate Werewolf — single-night, no elimination until
  *  the vote at the end. Pass-and-play on a shared phone.
@@ -190,6 +192,7 @@ export const OneNightWWBoard: React.FC<GameComponentProps> = ({ players, onCompl
       <section className="mx-auto max-w-md animate-fade-up text-center">
         <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-muted">{p.name}, your role</p>
         <div className="mt-6 rounded-lg border border-[hsl(var(--ember)/0.5)] bg-[hsl(var(--ember)/0.08)] px-6 py-8">
+          <RoleArt game="onenightww" role={role} fallback={["#2a1a1a", "#100d0b"]} className="aspect-[4/3] w-full mb-4" />
           <h2 className="font-display text-4xl italic text-[hsl(var(--ember))]">{ROLE_LABEL[role]}</h2>
           <p className="mt-3 text-sm text-muted">{ROLE_BLURB[role]}</p>
         </div>
@@ -616,6 +619,7 @@ export const OneNightWWBoard: React.FC<GameComponentProps> = ({ players, onCompl
 
   return (
     <section className="mx-auto max-w-md animate-fade-up">
+      <EndScreenArt game="onenightww" outcome={villageWins ? "village-wins" : "wolves-win"} fallback={["#2a1a1a", "#100d0b"]} className="aspect-[16/9] w-full mb-4" />
       <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-muted">Verdict</p>
       <h2 className="mt-2 font-display text-4xl italic text-[hsl(var(--ember))]">
         {villageWins ? "Village wins." : "Werewolves win."}

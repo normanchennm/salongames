@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { GameResult } from "@/games/types";
 import { loadHistory } from "@/lib/persistence";
 import { GAMES } from "@/games/registry";
+import { DecorArt } from "@/components/DecorArt";
 
 /** Stats page — reads localStorage game history and renders
  *  aggregate views. Per-tab, per-device: no sync. Keeping it simple
@@ -70,6 +71,7 @@ export default function StatsPage() {
   if (history.length === 0) {
     return (
       <div className="mx-auto max-w-md animate-fade-up text-center">
+        <DecorArt slot="stats-empty" className="aspect-[16/9] w-full mb-8" />
         <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted">Stats</p>
         <h1 className="mt-2 font-display text-5xl italic">No games yet.</h1>
         <p className="mt-4 text-muted">

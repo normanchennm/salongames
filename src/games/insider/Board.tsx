@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import type { GameComponentProps, Player } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
+import { RoleArt } from "@/components/RoleArt";
+import { EndScreenArt } from "@/components/EndScreenArt";
 import { WORDS } from "./words";
 
 /** Insider — pass-and-play deduction.
@@ -151,6 +153,7 @@ export const InsiderBoard: React.FC<GameComponentProps> = ({ players, onComplete
       <section className="mx-auto max-w-md animate-fade-up text-center">
         <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-muted">{p.name}, your role</p>
         <div className="mt-6 rounded-lg border border-[hsl(var(--ember)/0.5)] bg-[hsl(var(--ember)/0.08)] px-6 py-8">
+          <RoleArt game="insider" role={role} fallback={["#2a1a4a", "#100d0b"]} className="aspect-[4/3] w-full mb-4" />
           <h2 className="font-display text-4xl italic text-[hsl(var(--ember))]">
             {role === "master" ? "Master" : role === "insider" ? "Insider" : "Commoner"}
           </h2>
@@ -241,6 +244,7 @@ export const InsiderBoard: React.FC<GameComponentProps> = ({ players, onComplete
     const winners = phase.assignments.filter((a) => a.role === "master" || a.role === "insider").map((a) => a.playerId);
     return (
       <section className="mx-auto max-w-md animate-fade-up text-center">
+        <EndScreenArt game="insider" outcome="timeout" fallback={["#2a1a4a", "#100d0b"]} className="aspect-[16/9] w-full mb-4" />
         <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-muted">Time&apos;s up</p>
         <h2 className="mt-2 font-display text-4xl italic text-[hsl(var(--ember))]">Master &amp; Insider win.</h2>
         <p className="mt-4 text-sm text-muted">The Commoners didn&apos;t reach the word in time.</p>
@@ -396,6 +400,7 @@ export const InsiderBoard: React.FC<GameComponentProps> = ({ players, onComplete
 
   return (
     <section className="mx-auto max-w-md animate-fade-up text-center">
+      <EndScreenArt game="insider" outcome={phase.outcome === "caught" ? "caught" : "escaped"} fallback={["#2a1a4a", "#100d0b"]} className="aspect-[16/9] w-full mb-4" />
       <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-muted">Verdict</p>
       <h2 className="mt-2 font-display text-4xl italic text-[hsl(var(--ember))]">
         {phase.outcome === "caught" ? "Insider caught." : "Insider escapes."}

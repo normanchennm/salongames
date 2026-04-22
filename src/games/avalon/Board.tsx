@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
 import { ROLES, TEAM_SIZES, buildRoleMix, failsNeeded, shuffle, type RoleId } from "./roles";
+import { RoleArt } from "@/components/RoleArt";
+import { EndScreenArt } from "@/components/EndScreenArt";
 
 /** Avalon-clone ("Knights of Camelot") — 5-10 players, quest-based
  *  social deduction.
@@ -352,6 +354,7 @@ export const AvalonBoard: React.FC<GameComponentProps> = ({ players, onComplete,
   const assassin = assigned.find((a) => a.role === "assassin")!;
   return (
     <section className="mx-auto max-w-lg animate-fade-up">
+      <EndScreenArt game="avalon" outcome={phase.winner === "good" ? "good-wins" : "evil-wins"} fallback={["#2a1a0a", "#100d0b"]} className="aspect-[16/9] w-full mb-4" />
       <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-muted">Game over</p>
       <h2 className={`mt-2 font-display text-5xl italic ${phase.winner === "good" ? "text-[hsl(210_80%_65%)]" : "text-[hsl(0_70%_55%)]"}`}>
         {phase.winner === "good" ? "Good wins." : "Evil wins."}
@@ -421,6 +424,7 @@ function RevealCard({
         </button>
       ) : (
         <div className="mt-10 rounded-md border px-6 py-8" style={{ borderColor: role.accent }}>
+          <RoleArt game="avalon" role={role.id} fallback={["#2a1a0a", "#100d0b"]} className="aspect-[4/3] w-full mb-4" />
           <div className="font-mono text-[10px] uppercase tracking-[0.3em]" style={{ color: role.accent }}>
             your role
           </div>

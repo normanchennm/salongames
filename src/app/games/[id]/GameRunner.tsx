@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { PlayerRoster } from "@/components/PlayerRoster";
+import { GameHero } from "@/components/GameHero";
 import { getGame } from "@/games/registry";
 import type { GameResult, Player } from "@/games/types";
 import { DEFAULT_SETTINGS, appendHistory, loadSettings } from "@/lib/persistence";
@@ -44,7 +45,8 @@ export function GameRunner({ gameId }: { gameId: string }) {
   if (!players) {
     return (
       <div>
-        <header className="mb-10">
+        <GameHero game={game} />
+        <header className="mb-10 mt-6">
           <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[hsl(var(--ember))]">
             {game.category.replace("-", " ")}
           </p>

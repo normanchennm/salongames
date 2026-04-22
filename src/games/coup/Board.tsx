@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
+import { RoleArt } from "@/components/RoleArt";
 
 /** Coup — 2-6p bluffing card game with hidden characters.
  *
@@ -175,11 +176,12 @@ export const CoupBoard: React.FC<GameComponentProps> = ({ players, onComplete, o
     return (
       <section className="mx-auto max-w-md animate-fade-up text-center">
         <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-muted">{p.name}, your hand</p>
-        <div className="mt-4 flex justify-center gap-3">
+        <div className="mt-4 grid grid-cols-2 gap-3">
           {state.hand.map((c, i) => (
-            <div key={i} className="rounded-lg border border-[hsl(var(--ember)/0.5)] bg-[hsl(var(--ember)/0.08)] p-4 text-center">
-              <p className="font-display text-2xl italic text-[hsl(var(--ember))]">{CHAR_LABEL[c]}</p>
-              <p className="mt-1 font-mono text-[10px] text-muted">{CHAR_BLURB[c]}</p>
+            <div key={i} className="rounded-lg border border-[hsl(var(--ember)/0.5)] bg-[hsl(var(--ember)/0.08)] p-3 text-center">
+              <RoleArt game="coup" role={c} fallback={["#3a1010", "#100d0b"]} className="aspect-square w-full mb-2" />
+              <p className="font-display text-xl italic text-[hsl(var(--ember))]">{CHAR_LABEL[c]}</p>
+              <p className="mt-1 font-mono text-[9px] text-muted">{CHAR_BLURB[c]}</p>
             </div>
           ))}
         </div>

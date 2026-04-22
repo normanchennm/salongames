@@ -5,6 +5,7 @@ import type { GameComponentProps } from "@/games/types";
 import { playCue, WEREWOLF_CUES } from "@/lib/narrator";
 import { useScrollToTop } from "@/lib/useScrollToTop";
 import { ROLES, defaultRoleMix, shuffle, type RoleId } from "./roles";
+import { RoleArt } from "@/components/RoleArt";
 
 /** Werewolf pass-and-play MVP. Covers the full loop:
  *  lobby → secret role reveal → night phase → day discussion →
@@ -433,6 +434,7 @@ function RevealCard({ playerName, roleName, roleId, roleDescription, roleAccent,
         </button>
       ) : (
         <div className="mt-10 rounded-md border px-6 py-8" style={{ borderColor: roleAccent }}>
+          <RoleArt game="werewolf" role={roleId} fallback={["#2a1a10", "#100d0b"]} className="aspect-[4/3] w-full mb-4" />
           <div className="font-mono text-[10px] uppercase tracking-[0.3em]" style={{ color: roleAccent }}>
             your role
           </div>

@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Search, X } from "lucide-react";
 import { GameCard } from "@/components/GameCard";
+import { DecorArt } from "@/components/DecorArt";
 import type { Game } from "@/games/types";
 
 /** Catalog browser with search, category filter, player-count filter,
@@ -176,7 +177,8 @@ export function CatalogBrowser({ games }: { games: Game[] }) {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="mt-8 rounded-md border border-dashed border-border bg-bg/40 p-8 text-center">
+        <div className="mt-8 text-center">
+          <DecorArt slot="no-matches" className="aspect-[16/9] w-full mb-6" />
           <p className="font-display text-xl italic text-muted">No matches.</p>
           <button type="button" onClick={clearFilters} className="mt-3 font-mono text-xs uppercase tracking-wider text-[hsl(var(--ember))]">
             Clear filters
