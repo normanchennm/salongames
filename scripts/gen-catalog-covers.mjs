@@ -73,6 +73,9 @@ const COVERS = {
   hearts:          "A scatter of playing cards fanned across a velvet tablecloth, the queen of spades face-up on top, moody candle light. " + STYLE,
   spades:          "A tightly held hand of playing cards with the ace of spades peeking out, other cards blurred, focused intensity. " + STYLE,
   rummy:           "A neat meld of three sevens laid out on a green felt table, extra cards held fanned in foreground, cozy afternoon tone. " + STYLE,
+  // Adult-only (Dating Mode)
+  nhiespicy:       "A bottle of red wine and two half-empty glasses on a low coffee table in a dimly lit apartment, throw blanket pooled on the couch, late-night intimacy, two pairs of shoes kicked off nearby. " + STYLE,
+  truthordare:     "Two folded paper notes on a dark wood table beside a single lit candle, one slightly unfolded, warm low light, anticipation. " + STYLE,
 };
 
 async function callAzureOpenAI(prompt) {
