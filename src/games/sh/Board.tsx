@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
 import { RoleArt } from "@/components/RoleArt";
 import { EndScreenArt } from "@/components/EndScreenArt";
+import { playCue, SH_CUES } from "@/lib/narrator";
 
 /** Secret Hitler (simplified MVP). 5-10p hidden-team policy game.
  *
@@ -66,6 +67,17 @@ export const SecretHitlerBoard: React.FC<GameComponentProps> = ({ players, onCom
   const [phase, setPhase] = useState<Phase>({ kind: "intro" });
   const [roles, setRoles] = useState<Roles>({});
   useScrollToTop(phase.kind + ("presidentIdx" in phase ? `-p${phase.presidentIdx}` : "") + ("voterIdx" in phase ? `-v${phase.voterIdx}` : "") + ("playerIdx" in phase ? `-rp${phase.playerIdx}` : ""));
+
+  useEffect(() => {
+    if (phase.kind === "vote-result") {
+      const jas = Object.values(phase.votes).filter((v) => v === "ja").length;
+      playCue(jas > players.length - jas ? SH_CUES.electionApproved : SH_CUES.electionFailed);
+    } else if (phase.kind === "enact-reveal") {
+      playCue(phase.enacted === "L" ? SH_CUES.liberalPolicy : SH_CUES.fascistPolicy);
+    } else if (phase.kind === "end") {
+      playCue(phase.winner === "liberal" ? SH_CUES.liberalsWin : SH_CUES.fascistsWin);
+    }
+  }, [phase, players.length]);
 
   if (players.length < 5 || players.length > 10) {
     return (

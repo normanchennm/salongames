@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
 import { RoleArt } from "@/components/RoleArt";
 import { EndScreenArt } from "@/components/EndScreenArt";
+import { playCue, RESISTANCE_CUES } from "@/lib/narrator";
 
 /** The Resistance — 5-10 player hidden-team mission game.
  *
@@ -64,6 +65,16 @@ export const ResistanceBoard: React.FC<GameComponentProps> = ({ players, onCompl
   const [phase, setPhase] = useState<Phase>({ kind: "intro" });
   const [roles, setRoles] = useState<Roles>({});
   useScrollToTop(phase.kind + ("mission" in phase ? `-m${phase.mission}` : "") + ("voterIdx" in phase ? `-v${phase.voterIdx}` : "") + ("teamIdx" in phase ? `-t${phase.teamIdx}` : ""));
+
+  useEffect(() => {
+    if (phase.kind === "vote-result") {
+      const ups = Object.values(phase.votes).filter((v) => v === "up").length;
+      const approved = ups > players.length - ups;
+      playCue(approved ? RESISTANCE_CUES.proposalApproved : RESISTANCE_CUES.proposalRejected);
+    }
+    else if (phase.kind === "mission-result") playCue(phase.success ? RESISTANCE_CUES.missionSuccess : RESISTANCE_CUES.missionFail);
+    else if (phase.kind === "end") playCue(phase.winner === "resistance" ? RESISTANCE_CUES.resistanceWins : RESISTANCE_CUES.spiesWin);
+  }, [phase]);
 
   if (players.length < 5 || players.length > 10) {
     return (

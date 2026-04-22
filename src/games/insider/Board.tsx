@@ -5,6 +5,7 @@ import type { GameComponentProps, Player } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
 import { RoleArt } from "@/components/RoleArt";
 import { EndScreenArt } from "@/components/EndScreenArt";
+import { playCue, INSIDER_CUES } from "@/lib/narrator";
 import { WORDS } from "./words";
 
 /** Insider — pass-and-play deduction.
@@ -78,6 +79,13 @@ export const InsiderBoard: React.FC<GameComponentProps> = ({ players, onComplete
   }, [phase.kind]);
 
   useScrollToTop(phase.kind + ("playerIndex" in phase ? `-${phase.playerIndex}` : "") + ("voterIndex" in phase ? `-v${phase.voterIndex}` : ""));
+
+  useEffect(() => {
+    if (phase.kind === "guessing") playCue(INSIDER_CUES.guessStart);
+    else if (phase.kind === "guess-timeout") playCue(INSIDER_CUES.guessTimeout);
+    else if (phase.kind === "hunting") playCue(INSIDER_CUES.huntStart);
+    else if (phase.kind === "end") playCue(phase.outcome === "caught" ? INSIDER_CUES.insiderCaught : INSIDER_CUES.insiderEscaped);
+  }, [phase]);
 
   function finishGame(winnerIds: string[], outcome: string) {
     onComplete({

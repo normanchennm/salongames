@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
 import { ROLES, TEAM_SIZES, buildRoleMix, failsNeeded, shuffle, type RoleId } from "./roles";
 import { RoleArt } from "@/components/RoleArt";
 import { EndScreenArt } from "@/components/EndScreenArt";
+import { playCue, AVALON_CUES } from "@/lib/narrator";
 
 /** Avalon-clone ("Knights of Camelot") — 5-10 players, quest-based
  *  social deduction.
@@ -48,6 +49,17 @@ export const AvalonBoard: React.FC<GameComponentProps> = ({ players, onComplete,
 
   const [phase, setPhase] = useState<Phase>({ kind: "reveal", current: 0 });
   useScrollToTop(phase.kind + ("round" in phase ? `-${phase.round}` : "") + ("current" in phase ? `-${phase.current}` : ""));
+
+  // Narration cues for dramatic beats.
+  useEffect(() => {
+    if (phase.kind === "quest-resolve") {
+      playCue(phase.result === "success" ? AVALON_CUES.missionSuccess : AVALON_CUES.missionFail);
+    } else if (phase.kind === "assassin-guess") {
+      playCue(AVALON_CUES.assassinTurn);
+    } else if (phase.kind === "end") {
+      playCue(phase.winner === "good" ? AVALON_CUES.goodWins : AVALON_CUES.evilWins);
+    }
+  }, [phase]);
 
   const teamSize = (round: number) => TEAM_SIZES[n][round - 1];
 

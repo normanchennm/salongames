@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { GameComponentProps, Player } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
 import { RoleArt } from "@/components/RoleArt";
 import { EndScreenArt } from "@/components/EndScreenArt";
+import { playCue, ONENIGHT_CUES } from "@/lib/narrator";
 
 /** One Night Ultimate Werewolf — single-night, no elimination until
  *  the vote at the end. Pass-and-play on a shared phone.
@@ -115,6 +116,28 @@ export const OneNightWWBoard: React.FC<GameComponentProps> = ({ players, onCompl
       ("playerIndex" in phase ? `-p${phase.playerIndex}` : "") +
       ("voterIndex" in phase ? `-v${phase.voterIndex}` : ""),
   );
+
+  // Narration cues — fire on phase transitions that correspond to
+  // dramatic beats. No-op if MP3 missing (see lib/narrator.ts).
+  useEffect(() => {
+    const k = phase.kind;
+    if (k === "night-intro") playCue(ONENIGHT_CUES.nightIntro);
+    else if (k === "night-werewolves-pass") playCue(ONENIGHT_CUES.nightWerewolves);
+    else if (k === "night-seer-pass") playCue(ONENIGHT_CUES.nightSeer);
+    else if (k === "night-robber-pass") playCue(ONENIGHT_CUES.nightRobber);
+    else if (k === "night-troublemaker-pass") playCue(ONENIGHT_CUES.nightTroublemaker);
+    else if (k === "day-intro") playCue(ONENIGHT_CUES.dayIntro);
+    else if (k === "reveal") {
+      const tally: Record<string, number> = {};
+      for (const v of Object.values(state.votes)) tally[v] = (tally[v] ?? 0) + 1;
+      const max = Math.max(0, ...Object.values(tally));
+      const killedIds = max >= 2 ? Object.entries(tally).filter(([, n]) => n === max).map(([id]) => id) : [];
+      const wwInPlay = Object.values(state.currentRoles).filter((r) => r === "werewolf").length;
+      const killedWWs = killedIds.filter((id) => state.currentRoles[id] === "werewolf");
+      const villageWins = wwInPlay === 0 ? killedIds.length === 0 : killedWWs.length > 0;
+      playCue(villageWins ? ONENIGHT_CUES.villageWins : ONENIGHT_CUES.werewolvesWin);
+    }
+  }, [phase.kind, state.currentRoles, state.votes]);
 
   function deal() {
     const roles = rolesFor(players.length);
