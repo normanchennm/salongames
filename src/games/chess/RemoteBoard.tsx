@@ -49,13 +49,23 @@ export const ChessRemoteBoard: React.FC<Props> = ({ players, remote, onComplete,
       players,
       winnerIds,
       durationSec: Math.round((Date.now() - startedAt) / 1000),
-      highlights: [state.reason === "checkmate" ? "Checkmate" : "Stalemate"],
+      highlights: [
+        state.reason === "checkmate"
+          ? "Checkmate"
+          : state.reason === "stalemate"
+            ? "Stalemate"
+            : state.reason === "fifty-move"
+              ? "Draw — 50-move rule"
+              : state.reason === "insufficient-material"
+                ? "Draw — insufficient material"
+                : "Draw",
+      ],
     });
   }, [isHost, state, players, onComplete, startedAt]);
 
   if (!state) {
     return (
-      <section className="mx-auto max-w-md pt-20 text-center">
+      <section role="status" aria-live="polite" className="mx-auto max-w-md pt-20 text-center">
         <Loader2 className="mx-auto h-5 w-5 animate-spin text-[hsl(var(--ember))]" />
         <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.2em] text-muted">Setting up pieces…</p>
       </section>
@@ -98,7 +108,13 @@ export const ChessRemoteBoard: React.FC<Props> = ({ players, remote, onComplete,
             {state.kind === "end"
               ? state.reason === "checkmate"
                 ? "Checkmate"
-                : "Stalemate"
+                : state.reason === "stalemate"
+                  ? "Stalemate"
+                  : state.reason === "fifty-move"
+                    ? "Draw · 50-move"
+                    : state.reason === "insufficient-material"
+                      ? "Draw · insufficient material"
+                      : "Draw"
               : myTurn
                 ? `Your turn${inCheck ? " (check)" : ""}`
                 : `${currentName}'s turn${inCheck ? " (check)" : ""}`}
@@ -152,7 +168,7 @@ export const ChessRemoteBoard: React.FC<Props> = ({ players, remote, onComplete,
                 <p className="flex-1 rounded-md border border-dashed border-border bg-bg/30 px-3 py-3 text-center text-xs text-muted">Waiting for host…</p>
               )}
               <button type="button" onClick={onQuit} className="flex-1 rounded-md border border-border py-3 font-mono text-[11px] uppercase tracking-wider text-muted">
-                Leave
+                Leave room
               </button>
             </div>
           </div>

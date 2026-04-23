@@ -21,6 +21,7 @@ interface State {
   grid: Grid;
   turn: Color;
   enPassant: [number, number] | null; // target square for capture
+  halfmoveClock: number; // half-moves since last pawn move or capture
 }
 
 function startGrid(): Grid {
@@ -181,17 +182,24 @@ function attackMoves(state: State, r: number, c: number): [number, number][] {
 }
 
 function applyMove(state: State, from: [number, number], to: [number, number]): State {
-  const next: State = { grid: state.grid.map((row) => row.slice()), turn: state.turn === "w" ? "b" : "w", enPassant: null };
+  const next: State = { grid: state.grid.map((row) => row.slice()), turn: state.turn === "w" ? "b" : "w", enPassant: null, halfmoveClock: state.halfmoveClock + 1 };
   const [fr, fc] = from, [tr, tc] = to;
   const piece = next.grid[fr][fc];
   if (!piece) return next;
   const moved: Piece = { ...piece, hasMoved: true };
+  const captureTarget = state.grid[tr][tc];
   next.grid[fr][fc] = null;
+
+  // Reset the halfmove clock on pawn move or capture. The 50-move
+  // rule counts half-moves since one of those happened.
+  if (piece.type === "P") next.halfmoveClock = 0;
+  if (captureTarget) next.halfmoveClock = 0;
 
   // En passant capture
   if (piece.type === "P" && state.enPassant && tr === state.enPassant[0] && tc === state.enPassant[1] && fc !== tc) {
     // Remove captured pawn.
     next.grid[fr][tc] = null;
+    next.halfmoveClock = 0;
   }
   // Pawn double-step sets enPassant target.
   if (piece.type === "P" && Math.abs(tr - fr) === 2) {
@@ -257,6 +265,28 @@ const PIECE_SYMBOLS: Record<string, string> = {
   "bP": "♟", "bR": "♜", "bN": "♞", "bB": "♝", "bQ": "♛", "bK": "♚",
 };
 
+/** Insufficient material: K vs K, K+minor vs K, K+B vs K+B with the
+ *  bishops on the same colour. Any pawn / rook / queen still on the
+ *  board rules out the draw. */
+function isInsufficientMaterial(state: State): boolean {
+  const pieces: Array<{ type: PieceType; square: number }> = [];
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      const p = state.grid[r][c];
+      if (!p) continue;
+      pieces.push({ type: p.type, square: (r + c) % 2 });
+    }
+  }
+  if (pieces.some((p) => p.type === "P" || p.type === "R" || p.type === "Q")) return false;
+  const minors = pieces.filter((p) => p.type === "B" || p.type === "N");
+  if (minors.length === 0) return true;
+  if (minors.length === 1) return true;
+  if (minors.length === 2 && minors.every((p) => p.type === "B")) {
+    return minors[0].square === minors[1].square;
+  }
+  return false;
+}
+
 export const ChessBoard: React.FC<GameComponentProps> = (props) => {
   if (props.remote) return <ChessRemoteBoard {...props} remote={props.remote} />;
   return <ChessLocalBoard {...props} />;
@@ -264,7 +294,7 @@ export const ChessBoard: React.FC<GameComponentProps> = (props) => {
 
 const ChessLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
   const startedAt = useMemo(() => Date.now(), []);
-  const [state, setState] = useState<State>(() => ({ grid: startGrid(), turn: "w", enPassant: null }));
+  const [state, setState] = useState<State>(() => ({ grid: startGrid(), turn: "w", enPassant: null, halfmoveClock: 0 }));
   const [selected, setSelected] = useState<[number, number] | null>(null);
   useScrollToTop(state.turn);
 
@@ -281,8 +311,19 @@ const ChessLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, on
   const bPlayer = players[1];
   const inCheck = isInCheck(state, state.turn);
   const hasMoves = anyLegalMoves(state);
-  const over = !hasMoves;
-  const winnerIdx = over ? (inCheck ? (state.turn === "w" ? 1 : 0) : -1) : -1;
+  const fiftyMoveDraw = state.halfmoveClock >= 100;
+  const insufficientMaterialDraw = isInsufficientMaterial(state);
+  const over = !hasMoves || fiftyMoveDraw || insufficientMaterialDraw;
+  // Winner index is only set on checkmate. Stalemate / 50-move /
+  // insufficient material all resolve to no winner (draw, all-share).
+  const winnerIdx = over && !hasMoves && inCheck ? (state.turn === "w" ? 1 : 0) : -1;
+  const endReason: "checkmate" | "stalemate" | "fifty-move" | "insufficient-material" | null = !over
+    ? null
+    : !hasMoves
+      ? inCheck ? "checkmate" : "stalemate"
+      : fiftyMoveDraw
+        ? "fifty-move"
+        : "insufficient-material";
 
   const targets: Set<string> = new Set(
     selected ? legalMoves(state, selected[0], selected[1]).map(([r, c]) => `${r},${c}`) : [],
@@ -302,13 +343,23 @@ const ChessLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, on
     else setSelected(null);
   };
 
+  const endLabel = (() => {
+    switch (endReason) {
+      case "checkmate": return "Checkmate";
+      case "stalemate": return "Stalemate";
+      case "fifty-move": return "Draw · 50-move";
+      case "insufficient-material": return "Draw · insufficient material";
+      default: return "";
+    }
+  })();
+
   const finish = () => {
     onComplete({
       playedAt: new Date().toISOString(),
       players,
       winnerIds: winnerIdx >= 0 ? [players[winnerIdx].id] : players.map((p) => p.id),
       durationSec: Math.round((Date.now() - startedAt) / 1000),
-      highlights: [inCheck ? "Checkmate" : "Stalemate"],
+      highlights: [endLabel || "Game ended"],
     });
   };
 
@@ -319,7 +370,7 @@ const ChessLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, on
           <span className="text-fg">{wPlayer.name}</span> vs <span className="text-fg">{bPlayer.name}</span>
         </span>
         <span className={state.turn === "w" ? "" : "text-[hsl(var(--ember))]"}>
-          {over ? (inCheck ? "Checkmate" : "Stalemate") : `${state.turn === "w" ? wPlayer.name : bPlayer.name}'s turn${inCheck ? " (check)" : ""}`}
+          {over ? endLabel : `${state.turn === "w" ? wPlayer.name : bPlayer.name}'s turn${inCheck ? " (check)" : ""}`}
         </span>
       </div>
 
@@ -354,8 +405,15 @@ const ChessLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, on
       {over && (
         <div className="mt-6 text-center">
           <h2 className="font-display text-3xl italic text-[hsl(var(--ember))]">
-            {inCheck ? `${players[winnerIdx].name} wins.` : "Draw."}
+            {endReason === "checkmate" && winnerIdx >= 0
+              ? `${players[winnerIdx].name} wins.`
+              : "Draw."}
           </h2>
+          {endReason && endReason !== "checkmate" && (
+            <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.25em] text-muted">
+              {endLabel}
+            </p>
+          )}
           <div className="mt-6 flex gap-3">
             <button type="button" onClick={finish} className="flex-1 rounded-md bg-[hsl(var(--ember))] py-3 font-mono text-[11px] uppercase tracking-wider text-bg">Play again</button>
             <button type="button" onClick={onQuit} className="flex-1 rounded-md border border-border py-3 font-mono text-[11px] uppercase tracking-wider text-muted">Back</button>

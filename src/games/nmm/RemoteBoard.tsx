@@ -45,7 +45,7 @@ export const NineMensMorrisRemoteBoard: React.FC<Props> = ({ players, remote, on
 
   if (!state) {
     return (
-      <section className="mx-auto max-w-md pt-20 text-center">
+      <section role="status" aria-live="polite" className="mx-auto max-w-md pt-20 text-center">
         <Loader2 className="mx-auto h-5 w-5 animate-spin text-[hsl(var(--ember))]" />
         <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.2em] text-muted">Setting up board…</p>
       </section>

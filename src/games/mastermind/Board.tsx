@@ -12,14 +12,17 @@ import { useScrollToTop } from "@/lib/useScrollToTop";
  *  rest of the table guesses collaboratively. */
 
 const CODE_LEN = 4;
-const COLORS = ["red", "amber", "green", "teal", "blue", "violet"];
+// Six pegs tuned to the ember-on-warm-paper palette — a gradient
+// (ember, honey, sand, moss, slate, ink) that reads as part of the
+// salon world rather than a generic rainbow.
+const COLORS = ["ember", "honey", "sand", "moss", "slate", "ink"];
 const COLOR_HEX: Record<string, string> = {
-  red: "hsl(var(--ember))",
-  amber: "#c9a94c",
-  green: "#5a9a5a",
-  teal: "#4a8a9a",
-  blue: "#5a8abb",
-  violet: "#8a5aab",
+  ember: "hsl(var(--ember))",
+  honey: "#c9a04c",
+  sand:  "#d8b98a",
+  moss:  "#6f8a4a",
+  slate: "#4a6a7a",
+  ink:   "#1a2430",
 };
 const MAX_GUESSES = 10;
 

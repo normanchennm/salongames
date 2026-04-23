@@ -1,5 +1,10 @@
 /** Chess remote state machine. Full-rule implementation (castling,
- *  en passant, auto-queen promotion, check / checkmate / stalemate). */
+ *  en passant, auto-queen promotion, check / checkmate / stalemate,
+ *  50-move draw, insufficient-material draw).
+ *
+ *  Threefold repetition is deferred — keeping a position-history array
+ *  in state would bloat every broadcast, and players can verbally agree
+ *  to call a draw. */
 
 export type PieceType = "P" | "R" | "N" | "B" | "Q" | "K";
 export type Color = "w" | "b";
@@ -10,6 +15,9 @@ export interface ChessCore {
   grid: Grid;
   turn: Color;
   enPassant: [number, number] | null;
+  /** Half-moves since the last pawn move or capture. 100 half-moves
+   *  (50 full moves each side) triggers the 50-move draw. */
+  halfmoveClock: number;
 }
 
 export type ChessRemoteState = {
@@ -17,7 +25,7 @@ export type ChessRemoteState = {
   core: ChessCore;
   playerOrder: string[]; // [white, black]
   winner: "w" | "b" | "draw" | null;
-  reason: "checkmate" | "stalemate" | null;
+  reason: "checkmate" | "stalemate" | "fifty-move" | "insufficient-material" | null;
 };
 
 export type ChessRemoteAction =
@@ -185,15 +193,23 @@ function applyChessMove(core: ChessCore, from: [number, number], to: [number, nu
     grid: core.grid.map((row) => row.slice()),
     turn: core.turn === "w" ? "b" : "w",
     enPassant: null,
+    halfmoveClock: core.halfmoveClock + 1,
   };
   const [fr, fc] = from, [tr, tc] = to;
   const piece = next.grid[fr][fc];
   if (!piece) return next;
   const moved: Piece = { ...piece, hasMoved: true };
+  const captureTarget = core.grid[tr][tc];
   next.grid[fr][fc] = null;
+
+  // Reset halfmove clock on pawn move or capture (en passant capture
+  // also counts; we check below before overwriting).
+  if (piece.type === "P") next.halfmoveClock = 0;
+  if (captureTarget) next.halfmoveClock = 0;
 
   if (piece.type === "P" && core.enPassant && tr === core.enPassant[0] && tc === core.enPassant[1] && fc !== tc) {
     next.grid[fr][tc] = null;
+    next.halfmoveClock = 0;
   }
   if (piece.type === "P" && Math.abs(tr - fr) === 2) {
     next.enPassant = [(fr + tr) / 2, fc];
@@ -214,6 +230,32 @@ function applyChessMove(core: ChessCore, from: [number, number], to: [number, nu
   }
   next.grid[tr][tc] = moved;
   return next;
+}
+
+/** Insufficient-material draw: positions where neither side has any
+ *  mating potential. Covered: K vs K, K+N vs K (either side), K+B vs
+ *  K (either side), K+B vs K+B where both bishops are on the same
+ *  colour square. Any pawn / rook / queen rules out the draw. */
+export function isInsufficientMaterial(core: ChessCore): boolean {
+  const pieces: Array<{ type: PieceType; color: Color; square: number }> = [];
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      const p = core.grid[r][c];
+      if (!p) continue;
+      pieces.push({ type: p.type, color: p.color, square: (r + c) % 2 });
+    }
+  }
+  // If any pawn, rook, or queen is still on the board, mate is possible.
+  if (pieces.some((p) => p.type === "P" || p.type === "R" || p.type === "Q")) return false;
+  // Count non-king pieces per side.
+  const minors = pieces.filter((p) => p.type === "B" || p.type === "N");
+  if (minors.length === 0) return true; // K vs K
+  if (minors.length === 1) return true; // K+minor vs K
+  if (minors.length === 2 && minors.every((p) => p.type === "B")) {
+    // K+B vs K+B — draw only if bishops are on the same colour.
+    return minors[0].square === minors[1].square;
+  }
+  return false;
 }
 
 export function isInCheck(core: ChessCore, color: Color): boolean {
@@ -252,7 +294,7 @@ function anyLegalMoves(core: ChessCore): boolean {
 export function chessRemoteInitialState(players: Array<{ peerId: string; name: string }>): ChessRemoteState {
   return {
     kind: "playing",
-    core: { grid: startGrid(), turn: "w", enPassant: null },
+    core: { grid: startGrid(), turn: "w", enPassant: null, halfmoveClock: 0 },
     playerOrder: players.slice(0, 2).map((p) => p.peerId),
     winner: null,
     reason: null,
@@ -291,6 +333,20 @@ export function chessRemoteReducer(
       }
       return { ...state, core: nextCore, kind: "end", winner: "draw", reason: "stalemate" };
     }
+    // Draw by 50-move rule (100 half-moves with no pawn move or capture).
+    if (nextCore.halfmoveClock >= 100) {
+      return { ...state, core: nextCore, kind: "end", winner: "draw", reason: "fifty-move" };
+    }
+    // Draw by insufficient material — mate is no longer possible either way.
+    if (isInsufficientMaterial(nextCore)) {
+      return {
+        ...state,
+        core: nextCore,
+        kind: "end",
+        winner: "draw",
+        reason: "insufficient-material",
+      };
+    }
     return { ...state, core: nextCore };
   }
 
@@ -299,7 +355,7 @@ export function chessRemoteReducer(
     if (state.kind !== "end") return state;
     return {
       kind: "playing",
-      core: { grid: startGrid(), turn: "w", enPassant: null },
+      core: { grid: startGrid(), turn: "w", enPassant: null, halfmoveClock: 0 },
       playerOrder: state.playerOrder,
       winner: null,
       reason: null,

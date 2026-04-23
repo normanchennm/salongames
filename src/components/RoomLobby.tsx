@@ -41,7 +41,11 @@ export function RoomLobby<S>({
 
   if (!snap || snap.status === "connecting") {
     return (
-      <div className="mx-auto max-w-md animate-fade-up py-16 text-center">
+      <div
+        role="status"
+        aria-live="polite"
+        className="mx-auto max-w-md animate-fade-up py-16 text-center"
+      >
         <Loader2 className="mx-auto h-5 w-5 animate-spin text-[hsl(var(--ember))]" />
         <p className="mt-6 font-display text-3xl italic">Opening a room…</p>
         <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.25em] text-muted">
@@ -52,7 +56,11 @@ export function RoomLobby<S>({
   }
   if (snap.status === "host-migrating") {
     return (
-      <div className="mx-auto max-w-md animate-fade-up py-16 text-center">
+      <div
+        role="status"
+        aria-live="polite"
+        className="mx-auto max-w-md animate-fade-up py-16 text-center"
+      >
         <Loader2 className="mx-auto h-5 w-5 animate-spin text-[hsl(var(--ember))]" />
         <p className="mt-6 font-display text-3xl italic">Reconnecting…</p>
         <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.25em] text-muted">
@@ -63,7 +71,11 @@ export function RoomLobby<S>({
   }
   if (snap.status === "disconnected") {
     return (
-      <div className="mx-auto max-w-md animate-fade-up py-16 text-center">
+      <div
+        role="status"
+        aria-live="polite"
+        className="mx-auto max-w-md animate-fade-up py-16 text-center"
+      >
         <span className="mx-auto block h-2 w-2 rounded-full border border-[hsl(var(--ember))]" aria-hidden />
         <p className="mt-6 font-display text-3xl italic">Room closed.</p>
         <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted">
@@ -199,7 +211,11 @@ export function RoomLobby<S>({
               : "begin →"}
         </button>
       ) : (
-        <div className="mt-10 border-t border-border/60 pt-4 text-center">
+        <div
+          role="status"
+          aria-live="polite"
+          className="mt-10 border-t border-border/60 pt-4 text-center"
+        >
           <p className="inline-flex items-center gap-3 font-display text-lg italic text-muted">
             <span className="h-2 w-2 rounded-full bg-[hsl(var(--ember))] ember-pulse" aria-hidden />
             Waiting for host to begin

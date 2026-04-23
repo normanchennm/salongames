@@ -3,8 +3,9 @@
 /** Mode picker shown on the game detail page when a game supports
  *  remote play. Multi-device is primary — it gets the large card with
  *  the faux-code metaphor. Join-with-a-code rides underneath at half
- *  weight. Pass-and-play is a single hairline link at the bottom, only
- *  shown when the game is tagged as reasonable on one phone. */
+ *  weight. Pass-and-play is always offered as a third option; for
+ *  hidden-info games (where single-phone is awkward) we add an honest
+ *  caveat line instead of hiding the option altogether. */
 
 export type PlayMode = "local" | "remote-host" | "remote-join";
 
@@ -16,9 +17,16 @@ const CODE_SAMPLES = ["HDRE7", "NVQ3Z", "LYBM8", "KTPF4"];
 export function ModePicker({
   onPick,
   allowLocal = true,
+  localAwkward = false,
 }: {
   onPick: (mode: PlayMode) => void;
+  /** Deprecated behaviour — we now always offer pass-and-play. Retained
+   *  so the caller can still pass a flag if something truly shouldn't
+   *  be played on one phone (hasn't been needed yet). */
   allowLocal?: boolean;
+  /** Honest framing: show the single-phone option, but warn that this
+   *  game's hidden-info mechanics work best with a human narrator. */
+  localAwkward?: boolean;
 }) {
   // Pick a sample once per mount — stable across re-renders within the
   // same detail view, different each time you visit a game page.
@@ -111,7 +119,8 @@ export function ModePicker({
         </span>
       </button>
 
-      {/* Fallback — hairline link only when localFriendly. */}
+      {/* Fallback — always offered. For hidden-info games we add an
+          honest narrator-caveat rather than hide the option. */}
       {allowLocal && (
         <div className="mt-10 text-center">
           <button
@@ -129,6 +138,13 @@ export function ModePicker({
               className="h-px w-8 bg-border transition-colors group-hover:bg-[hsl(var(--ember-soft))]"
             />
           </button>
+          {localAwkward && (
+            <p className="mx-auto mt-3 max-w-sm font-mono text-[10px] italic leading-relaxed text-muted/70">
+              hidden roles &amp; private hands are clumsy on a single device.
+              works best if one player sits out as narrator — holding the
+              phone, reading prompts aloud, tapping what the table says.
+            </p>
+          )}
         </div>
       )}
     </div>

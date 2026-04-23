@@ -154,7 +154,11 @@ export function GameRunner({ gameId }: { gameId: string }) {
           </p>
         </header>
         <div className="hairline-heavy my-10" />
-        <ModePicker onPick={handlePickMode} allowLocal={!game.hideLocalOption} />
+        <ModePicker
+          onPick={handlePickMode}
+          allowLocal
+          localAwkward={!!game.hideLocalOption}
+        />
       </div>
     );
   }
