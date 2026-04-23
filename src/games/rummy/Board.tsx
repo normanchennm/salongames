@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
+import { RummyRemoteBoard } from "./RemoteBoard";
 
 /** Basic Rummy — 2-player pass-and-play. Deal 7. Draw one from stock
  *  or discard, then discard one. You may "go out" at end of your turn
@@ -80,7 +81,12 @@ type Phase =
   | { kind: "turn"; turnIdx: number; drew: boolean }
   | { kind: "end"; winnerIdx: number; deadwood: number };
 
-export const RummyBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
+export const RummyBoard: React.FC<GameComponentProps> = (props) => {
+  if (props.remote) return <RummyRemoteBoard {...props} remote={props.remote} />;
+  return <RummyLocalBoard {...props} />;
+};
+
+const RummyLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
   const startedAt = useMemo(() => Date.now(), []);
   const initial = useMemo(() => {
     const d = newDeck();

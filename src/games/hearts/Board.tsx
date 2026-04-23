@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
+import { HeartsRemoteBoard } from "./RemoteBoard";
 
 /** Hearts — 4 players, single-hand pass-and-play.
  *
@@ -48,7 +49,12 @@ type Phase =
   | { kind: "trick-end"; winningIdx: number; points: number; trickNo: number }
   | { kind: "end"; scores: number[] };
 
-export const HeartsBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
+export const HeartsBoard: React.FC<GameComponentProps> = (props) => {
+  if (props.remote) return <HeartsRemoteBoard {...props} remote={props.remote} />;
+  return <HeartsLocalBoard {...props} />;
+};
+
+const HeartsLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
   const startedAt = useMemo(() => Date.now(), []);
   const [hands, setHands] = useState<Card[][]>(() => {
     const d = deckShuffled();

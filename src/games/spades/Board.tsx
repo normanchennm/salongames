@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
+import { SpadesRemoteBoard } from "./RemoteBoard";
 
 /** Spades — 4 players in partnerships (0+2 vs 1+3), single-hand build.
  *
@@ -43,7 +44,12 @@ type Phase =
   | { kind: "trick-end"; winningIdx: number; trickNo: number; takes: number[] }
   | { kind: "end"; takes: number[] };
 
-export const SpadesBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
+export const SpadesBoard: React.FC<GameComponentProps> = (props) => {
+  if (props.remote) return <SpadesRemoteBoard {...props} remote={props.remote} />;
+  return <SpadesLocalBoard {...props} />;
+};
+
+const SpadesLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
   const startedAt = useMemo(() => Date.now(), []);
   const [hands, setHands] = useState<Card[][]>(() => {
     const d = deckShuffled();

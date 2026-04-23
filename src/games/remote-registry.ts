@@ -20,6 +20,9 @@ import { avalonRemoteInitialState, avalonRemoteReducer } from "./avalon/remote";
 import { shRemoteInitialState, shRemoteReducer } from "./sh/remote";
 import { insiderRemoteInitialState, insiderRemoteReducer } from "./insider/remote";
 import { onRemoteInitialState, onRemoteReducer } from "./onenightww/remote";
+import { heartsRemoteInitialState, heartsRemoteReducer } from "./hearts/remote";
+import { spadesRemoteInitialState, spadesRemoteReducer } from "./spades/remote";
+import { rummyRemoteInitialState, rummyRemoteReducer } from "./rummy/remote";
 
 export const REMOTE_CONFIGS: Record<string, RemoteGameConfig> = {
   fibbage: { initialState: fibRemoteInitialState, reducer: fibRemoteReducer as RemoteGameConfig["reducer"] },
@@ -34,6 +37,9 @@ export const REMOTE_CONFIGS: Record<string, RemoteGameConfig> = {
   sh: { initialState: shRemoteInitialState, reducer: shRemoteReducer as RemoteGameConfig["reducer"] },
   insider: { initialState: insiderRemoteInitialState, reducer: insiderRemoteReducer as RemoteGameConfig["reducer"] },
   onenightww: { initialState: onRemoteInitialState, reducer: onRemoteReducer as RemoteGameConfig["reducer"] },
+  hearts: { initialState: heartsRemoteInitialState, reducer: heartsRemoteReducer as RemoteGameConfig["reducer"] },
+  spades: { initialState: spadesRemoteInitialState, reducer: spadesRemoteReducer as RemoteGameConfig["reducer"] },
+  rummy: { initialState: rummyRemoteInitialState, reducer: rummyRemoteReducer as RemoteGameConfig["reducer"] },
 };
 
 export function getRemoteConfig(gameId: string): RemoteGameConfig | undefined {
