@@ -147,6 +147,42 @@ const GAMES = {
     ["bluff-caught", "Bluff exposed. Bidder loses a die."],
     ["winner",       "Last dice standing. The round is yours."],
   ],
+  trivia: [
+    ["round-start", "Ten questions. Read out loud. Tap when someone nails it."],
+    ["correct",     "Correct."],
+    ["wrong",       "Nobody got it."],
+    ["winner",      "Final answer. And we have a champion."],
+  ],
+  celebrity: [
+    ["round-start",     "Sixty seconds. Describe as many as you can."],
+    ["ten-seconds",     "Ten seconds."],
+    ["time-up",         "Time."],
+    ["winner",          "Final hat. The table has its winner."],
+  ],
+  fishbowl: [
+    ["round-start",       "Sixty seconds. Go."],
+    ["round-transition",  "Same pool. New rules. Good luck."],
+    ["ten-seconds",       "Ten seconds."],
+    ["time-up",           "Time."],
+    ["winner",            "Three rounds down. And we have a winner."],
+  ],
+  charades: [
+    ["round-start", "Sixty seconds. Act it out."],
+    ["ten-seconds", "Ten seconds."],
+    ["time-up",     "Time."],
+    ["winner",      "Curtain falls. And the winner is known."],
+  ],
+  wordle: [
+    ["correct", "Solved."],
+    ["close",   "You're right on top of it."],
+    ["lose",    "Out of guesses. The word escaped."],
+  ],
+  hangman: [
+    ["wrong-letter", "Wrong letter."],
+    ["last-chance",  "One more miss and it's over."],
+    ["winner",       "The word is yours."],
+    ["lose",         "The hangman wins this one."],
+  ],
 
   "escaperoom/antiquarian": [
     ["intro",             "You came in at closing to pick up a wrapped parcel. The bolt falls behind you. Your phone has one bar. The shop is dark. A note on the counter."],

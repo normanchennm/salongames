@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
+import { playCue, CHARADES_CUES } from "@/lib/narrator";
 import { randomPrompt, type Prompt } from "./prompts";
 
 /** Charades — rotating actor, per-prompt 60-second timer, scoring by
@@ -40,7 +41,28 @@ export const CharadesBoard: React.FC<GameComponentProps> = ({ players, onComplet
   useEffect(() => {
     if (phase.kind !== "playing") return;
     if (now >= phase.endsAt) {
+      playCue(CHARADES_CUES.timeUp);
       setPhase({ kind: "actor-done", actorIndex: phase.actorIndex, correct: phase.correct, skipped: phase.skipped });
+    }
+  }, [phase, now]);
+
+  // roundStart on each playing entry, tenSecondsLeft once per turn,
+  // winner on end-game screen.
+  const tenSecondsFiredRef = useRef(false);
+  useEffect(() => {
+    if (phase.kind === "playing") {
+      tenSecondsFiredRef.current = false;
+      playCue(CHARADES_CUES.roundStart);
+    }
+    if (phase.kind === "end") playCue(CHARADES_CUES.winner);
+  }, [phase.kind]);
+
+  useEffect(() => {
+    if (phase.kind !== "playing") return;
+    const remaining = Math.max(0, Math.ceil((phase.endsAt - now) / 1000));
+    if (remaining === 10 && !tenSecondsFiredRef.current) {
+      tenSecondsFiredRef.current = true;
+      playCue(CHARADES_CUES.tenSecondsLeft);
     }
   }, [phase, now]);
 

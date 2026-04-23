@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
+import { playCue, WORDLE_CUES } from "@/lib/narrator";
 import { WORDLE_POOL } from "./words";
 
 /** Wordle-clone — 5 letters, 6 guesses, standard rules.
@@ -66,6 +67,20 @@ export const WordleBoard: React.FC<GameComponentProps> = ({ players, onComplete,
   const [current, setCurrent] = useState("");
   const [over, setOver] = useState<null | "won" | "lost">(null);
   useScrollToTop(guesses.length);
+
+  useEffect(() => {
+    if (over === "won") playCue(WORDLE_CUES.correct);
+    else if (over === "lost") playCue(WORDLE_CUES.lose);
+  }, [over]);
+
+  // "Close" cue: if the last guess landed 3+ greens without winning,
+  // the solver is right on top of it. Fires once per qualifying guess.
+  useEffect(() => {
+    if (over || guesses.length === 0) return;
+    const last = guesses[guesses.length - 1];
+    const greens = gradeGuess(last, target).filter((s) => s === "green").length;
+    if (greens >= 3) playCue(WORDLE_CUES.close);
+  }, [guesses.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Letter-state map for keyboard feedback.
   const keyStates = useMemo<Record<string, LetterState>>(() => {

@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
+import { playCue, CELEBRITY_CUES } from "@/lib/narrator";
 
 /** Celebrity / Name in the Hat.
  *
@@ -48,6 +49,20 @@ export const CelebrityBoard: React.FC<GameComponentProps> = ({ players, onComple
     if (phase.kind !== "playing") return;
     const id = window.setInterval(() => setNow(Date.now()), 200);
     return () => window.clearInterval(id);
+  }, [phase.kind]);
+
+  // Narration. roundStart on each playing-phase entry. tenSecondsLeft
+  // once per turn when clock crosses 10s. timeUp when timer hits zero.
+  // winner on final end screen.
+  const tenSecondsFiredRef = useRef(false);
+  const timeUpFiredRef = useRef(false);
+  useEffect(() => {
+    if (phase.kind === "playing") {
+      tenSecondsFiredRef.current = false;
+      timeUpFiredRef.current = false;
+      playCue(CELEBRITY_CUES.roundStart);
+    }
+    if (phase.kind === "end") playCue(CELEBRITY_CUES.winner);
   }, [phase.kind]);
 
   useScrollToTop(phase.kind + ("playerIndex" in phase ? `-${phase.playerIndex}` : "") + ("actorIndex" in phase ? `-${phase.actorIndex}` : ""));
@@ -194,8 +209,17 @@ export const CelebrityBoard: React.FC<GameComponentProps> = ({ players, onComple
     const timedOut = remaining <= 0;
     const actor = players[phase.actorIndex % players.length];
 
+    if (remaining === 10 && !tenSecondsFiredRef.current) {
+      tenSecondsFiredRef.current = true;
+      playCue(CELEBRITY_CUES.tenSecondsLeft);
+    }
+
     // Timeout auto-transition
     if (timedOut) {
+      if (!timeUpFiredRef.current) {
+        timeUpFiredRef.current = true;
+        playCue(CELEBRITY_CUES.timeUp);
+      }
       setTimeout(() => {
         setPhase({
           kind: "turn-end",

@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
+import { playCue, TRIVIA_CUES } from "@/lib/narrator";
 import { pickRound, type Question } from "./questions";
 
 /** Trivia — rotating reader, tap-to-answer.
@@ -34,6 +35,9 @@ export const TriviaBoard: React.FC<GameComponentProps> = ({ players, onComplete,
   useScrollToTop(
     phase.kind + ("index" in phase ? `-${phase.index}-${phase.revealed}` : ""),
   );
+
+  useEffect(() => { playCue(TRIVIA_CUES.roundStart); }, []);
+  useEffect(() => { if (phase.kind === "end") playCue(TRIVIA_CUES.winner); }, [phase.kind]);
 
   if (phase.kind === "end") {
     const sorted = Object.entries(scores).sort(([, a], [, b]) => b - a);
@@ -179,6 +183,9 @@ export const TriviaBoard: React.FC<GameComponentProps> = ({ players, onComplete,
         onClick={() => {
           if (phase.correctScorerId && phase.correctScorerId !== "__none__") {
             setScores({ ...scores, [phase.correctScorerId]: scores[phase.correctScorerId] + 1 });
+            playCue(TRIVIA_CUES.correct);
+          } else if (phase.correctScorerId === "__none__") {
+            playCue(TRIVIA_CUES.wrong);
           }
           const nextIndex = phase.index + 1;
           if (nextIndex >= QUESTIONS_PER_GAME) {

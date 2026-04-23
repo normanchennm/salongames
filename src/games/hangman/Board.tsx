@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
+import { playCue, HANGMAN_CUES } from "@/lib/narrator";
 
 /** Hangman — one player secretly picks a word/phrase, everyone else
  *  guesses letters. Pass-and-play: picker enters on the phone privately,
@@ -73,6 +74,31 @@ export const HangmanBoard: React.FC<GameComponentProps> = ({ players, onComplete
   const startedAt = useMemo(() => Date.now(), []);
   const [phase, setPhase] = useState<Phase>({ kind: "pick-word", pickerIndex: 0, word: "" });
   useScrollToTop(phase.kind + ("wrongCount" in phase ? `-${phase.wrongCount}` : ""));
+
+  // Narration. wrongLetter each time wrongCount rises. lastChance once
+  // when wrongCount hits MAX_WRONG-1. winner/lose on end screen.
+  const prevWrongRef = useRef(0);
+  const lastChanceFiredRef = useRef(false);
+  useEffect(() => {
+    if (phase.kind !== "playing") {
+      prevWrongRef.current = 0;
+      lastChanceFiredRef.current = false;
+      return;
+    }
+    if (phase.wrongCount > prevWrongRef.current) {
+      playCue(HANGMAN_CUES.wrongLetter);
+    }
+    prevWrongRef.current = phase.wrongCount;
+    if (phase.wrongCount === MAX_WRONG - 1 && !lastChanceFiredRef.current) {
+      lastChanceFiredRef.current = true;
+      playCue(HANGMAN_CUES.lastChance);
+    }
+  }, [phase]);
+
+  useEffect(() => {
+    if (phase.kind !== "end") return;
+    playCue(phase.won ? HANGMAN_CUES.winner : HANGMAN_CUES.lose);
+  }, [phase.kind]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const picker = players[phase.pickerIndex % players.length];
 
