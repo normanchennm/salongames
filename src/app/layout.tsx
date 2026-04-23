@@ -64,26 +64,41 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen bg-bg text-fg">
         <RegisterSW />
         <header className="border-b border-border/70">
-          <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
-            <Wordmark variant="inline" size="md" href="/" />
-            <nav className="flex items-center gap-5 font-mono text-[10px] uppercase tracking-[0.25em] text-muted">
-              <a href="/" className="transition-colors hover:text-fg">§ games</a>
-              <a href="/date/" className="transition-colors hover:text-fg">§ date night</a>
+          <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-4 sm:px-6 sm:py-5">
+            {/* Two wordmarks so the mobile header doesn't crowd —
+                smaller on phone, full display size sm+. */}
+            <span className="sm:hidden">
+              <Wordmark variant="inline" size="sm" href="/" />
+            </span>
+            <span className="hidden sm:inline-flex">
+              <Wordmark variant="inline" size="md" href="/" />
+            </span>
+            <nav className="flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.2em] text-muted sm:gap-5 sm:tracking-[0.25em]">
+              <a href="/" className="transition-colors hover:text-fg">
+                <span className="hidden sm:inline">§ </span>games
+              </a>
+              <a href="/date/" className="transition-colors hover:text-fg">
+                <span className="hidden sm:inline">§ </span>
+                <span className="sm:hidden">date</span>
+                <span className="hidden sm:inline">date night</span>
+              </a>
               <a
                 href="/pro/"
                 className="text-[hsl(var(--ember))] transition-opacity hover:opacity-80"
               >
-                § pro
+                <span className="hidden sm:inline">§ </span>pro
               </a>
-              <a href="/stats/" className="transition-colors hover:text-fg">§ stats</a>
+              <a href="/stats/" className="transition-colors hover:text-fg">
+                <span className="hidden sm:inline">§ </span>stats
+              </a>
               <MuteToggle />
             </nav>
           </div>
         </header>
-        <main className="mx-auto max-w-5xl px-6 py-10">{children}</main>
+        <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">{children}</main>
         <FeedbackButton />
         <footer className="mt-16 border-t border-border/70">
-          <div className="mx-auto flex max-w-5xl flex-wrap items-baseline justify-between gap-6 px-6 py-8 font-mono text-[10px] uppercase tracking-[0.25em] text-muted">
+          <div className="mx-auto flex max-w-5xl flex-wrap items-baseline justify-between gap-4 px-4 py-6 font-mono text-[10px] uppercase tracking-[0.22em] text-muted sm:gap-6 sm:px-6 sm:py-8 sm:tracking-[0.25em]">
             <Wordmark variant="inline" size="sm" />
             <span className="text-muted/80">
               each on your own phone — or pass one around

@@ -147,7 +147,7 @@ export function RoomLobby<S>({
         </p>
         <div className="mt-2 flex items-start justify-between gap-4">
           <p
-            className="code-hero text-[84px] leading-none text-[hsl(var(--ember))] sm:text-[96px]"
+            className="code-hero text-[56px] leading-none text-[hsl(var(--ember))] sm:text-[96px]"
             aria-label={`Room code ${snap.code}`}
           >
             {snap.code}
