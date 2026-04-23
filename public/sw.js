@@ -8,7 +8,7 @@
 // Cache version bumps on every deploy. Old caches get purged on
 // activate so users don't get stuck on stale chunks.
 
-const CACHE = "salongames-v1";
+const CACHE = "salongames-v2";
 const SHELL = [
   "/",
   "/about/",
