@@ -15,6 +15,7 @@ const resistance: Game = {
     "Resistance vs Spies. Five missions; leader rotates and proposes a team, the table votes up or down. If approved, team members secretly play success or fail — one fail sinks the mission (mission 4 needs two with 7+ players). Three successes and the Resistance wins; three failures or five consecutive rejections and the Spies win. In Remote mode, roles are private and votes run simultaneously.",
   Component: ResistanceBoard,
   supportsRemote: true,
+  hideLocalOption: true,
 };
 
 export default resistance;

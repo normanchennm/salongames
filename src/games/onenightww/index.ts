@@ -15,6 +15,7 @@ const onenightww: Game = {
     "Roles are dealt with 3 cards left in the middle. Werewolves wake and see each other. Seer peeks. Robber swaps. Troublemaker scrambles. Morning: discuss, then a single vote. Kill a werewolf and the village wins — miss and they win. Very fast, very twisty. In Remote mode, night actions happen privately on each device in order.",
   Component: OneNightWWBoard,
   supportsRemote: true,
+  hideLocalOption: true,
 };
 
 export default onenightww;

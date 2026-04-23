@@ -15,6 +15,7 @@ const mafia: Game = {
     "Classic social deduction reframed from the village to the town. Each night the mafia quietly picks a victim; each day the town votes someone out. Detective and doctor roles help the town find the wolves among them. 5-18 players. In Remote mode, roles are private to each device and night actions run in parallel.",
   Component: MafiaBoard,
   supportsRemote: true,
+  hideLocalOption: true,
 };
 
 export default mafia;

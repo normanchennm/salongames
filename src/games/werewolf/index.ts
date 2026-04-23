@@ -15,6 +15,7 @@ const werewolf: Game = {
     "A group of villagers, a few secret werewolves, a moderator phone. Each night the wolves pick a victim; each day the village votes someone out. Classic social deduction that works from 5 players to a house party of 18. In Remote mode, everyone sees their role privately on their own device and night actions run in parallel.",
   Component: WerewolfBoard,
   supportsRemote: true,
+  hideLocalOption: true,
 };
 
 export default werewolf;

@@ -96,6 +96,12 @@ export interface Game {
    *  across the server/client boundary (Next's RSCs reject inline
    *  functions on serialized props). */
   supportsRemote?: boolean;
+  /** When true, the single-phone pass-and-play mode is hidden from the
+   *  picker for this game (multi-device only). Use for games where
+   *  hidden roles or hidden hands make one-phone play meaningfully
+   *  worse — social deduction and hidden-hand trick-takers. Has no
+   *  effect unless `supportsRemote` is also true. */
+  hideLocalOption?: boolean;
 }
 
 /** Host-side state machine for remote play. Lives outside the Game type

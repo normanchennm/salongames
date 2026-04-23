@@ -15,6 +15,7 @@ const sh: Game = {
     "Secret Hitler-style. Roles dealt: Liberals, Fascists, one Hitler. Each round the President nominates a Chancellor; table votes ja/nein. On approval, President drafts 3 policies and passes 2 to the Chancellor who enacts one. Liberals win at 5 liberal policies or (not in this build) if Hitler is executed. Fascists win at 6 fascist policies, or if Hitler is elected Chancellor after 3 fascist policies pass. Executive powers (investigate, peek, execute) are deferred. In Remote mode, policy drafts stay private on each device.",
   Component: SecretHitlerBoard,
   supportsRemote: true,
+  hideLocalOption: true,
 };
 
 export default sh;

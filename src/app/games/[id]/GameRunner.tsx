@@ -146,7 +146,7 @@ export function GameRunner({ gameId }: { gameId: string }) {
           <h1 className="mt-2 font-display text-5xl italic text-fg">{game.name}</h1>
           <p className="mt-3 max-w-xl text-muted">{game.description}</p>
         </header>
-        <ModePicker onPick={handlePickMode} />
+        <ModePicker onPick={handlePickMode} allowLocal={!game.hideLocalOption} />
       </div>
     );
   }
