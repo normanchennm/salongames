@@ -12,8 +12,9 @@ const badanswers: Game = {
   tier: "free",
   coverGradient: ["#1a1012", "#100d0b"],
   description:
-    "One prompt per round. Every non-judge player privately plays a response card from their 7-card hand. Judge reads them anonymized, picks the best one. First to 5 points wins. Original card pack — edgy, not cruel.",
+    "One prompt per round. Every non-judge player privately plays a response card from their 7-card hand. Judge reads them anonymized, picks the best one. First to 5 points wins. Original card pack — edgy, not cruel. In Remote mode, each player sees their own hand on their own device.",
   Component: BadAnswersBoard,
+  supportsRemote: true,
 };
 
 export default badanswers;

@@ -11,11 +11,15 @@ import type { RemoteGameConfig } from "./types";
 import { fibRemoteInitialState, fibRemoteReducer } from "./fibbage/remote";
 import { tpRemoteInitialState, tpRemoteReducer } from "./telephonepic/remote";
 import { cnRemoteInitialState, cnRemoteReducer } from "./codenames/remote";
+import { baRemoteInitialState, baRemoteReducer } from "./badanswers/remote";
+import { bsRemoteInitialState, bsRemoteReducer } from "./battleship/remote";
 
 export const REMOTE_CONFIGS: Record<string, RemoteGameConfig> = {
   fibbage: { initialState: fibRemoteInitialState, reducer: fibRemoteReducer as RemoteGameConfig["reducer"] },
   telephonepic: { initialState: tpRemoteInitialState, reducer: tpRemoteReducer as RemoteGameConfig["reducer"] },
   codenames: { initialState: cnRemoteInitialState, reducer: cnRemoteReducer as RemoteGameConfig["reducer"] },
+  badanswers: { initialState: baRemoteInitialState, reducer: baRemoteReducer as RemoteGameConfig["reducer"] },
+  battleship: { initialState: bsRemoteInitialState, reducer: bsRemoteReducer as RemoteGameConfig["reducer"] },
 };
 
 export function getRemoteConfig(gameId: string): RemoteGameConfig | undefined {

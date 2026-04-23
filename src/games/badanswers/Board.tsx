@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
 import { PROMPTS, RESPONSES } from "./cards";
+import { BadAnswersRemoteBoard } from "./RemoteBoard";
 
 /** Bad Answers — fill-in-the-blank pass-and-play.
  *
@@ -62,7 +63,12 @@ function fillBlank(prompt: string, answer: string): string {
   return `${prompt} ${answer}`;
 }
 
-export const BadAnswersBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
+export const BadAnswersBoard: React.FC<GameComponentProps> = (props) => {
+  if (props.remote) return <BadAnswersRemoteBoard {...props} remote={props.remote} />;
+  return <BadAnswersLocalBoard {...props} />;
+};
+
+const BadAnswersLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
   const startedAt = useMemo(() => Date.now(), []);
   const initial = useMemo(() => {
     const promptsDeck = shuffled(PROMPTS.map((p) => p.text));

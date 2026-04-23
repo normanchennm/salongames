@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
+import { BattleshipRemoteBoard } from "./RemoteBoard";
 
 /** Battleship — 10x10 pass-and-play. Each player secretly places
  *  5 ships (lengths 5,4,3,3,2), then they alternate shots. After a
@@ -60,7 +61,12 @@ type Phase =
   | { kind: "turn-result"; attackerIdx: number; hit: boolean; sunkShip: Ship | null; won: boolean; shot: [number, number] }
   | { kind: "end"; winnerIdx: number };
 
-export const BattleshipBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
+export const BattleshipBoard: React.FC<GameComponentProps> = (props) => {
+  if (props.remote) return <BattleshipRemoteBoard {...props} remote={props.remote} />;
+  return <BattleshipLocalBoard {...props} />;
+};
+
+const BattleshipLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
   const startedAt = useMemo(() => Date.now(), []);
   const [grids, setGrids] = useState<Grid[]>(() => [emptyGrid(), emptyGrid()]);
   const [phase, setPhase] = useState<Phase>({ kind: "intro" });
