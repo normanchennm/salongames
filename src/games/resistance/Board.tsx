@@ -39,6 +39,7 @@ type Phase =
   | { kind: "intro" }
   | { kind: "role-pass"; playerIdx: number }
   | { kind: "role-reveal"; playerIdx: number }
+  | { kind: "role-hidden"; playerIdx: number }
   | { kind: "mission-intro"; mission: number; leaderIdx: number; rejectStreak: number; missions: MissionRecord[] }
   | { kind: "team-select"; mission: number; leaderIdx: number; rejectStreak: number; missions: MissionRecord[]; teamIds: string[] }
   | { kind: "vote-pass"; mission: number; leaderIdx: number; rejectStreak: number; missions: MissionRecord[]; teamIds: string[]; voterIdx: number; votes: Record<string, "up" | "down"> }
@@ -139,10 +140,9 @@ const ResistanceLocalBoard: React.FC<GameComponentProps> = ({ players, onComplet
     const role = roles[p.id];
     const isSpy = role === "spy";
     const spyNames = isSpy ? players.filter((pl) => roles[pl.id] === "spy" && pl.id !== p.id).map((pl) => pl.name) : [];
-    const nextIdx = phase.playerIdx + 1;
     return (
       <section className="mx-auto max-w-md animate-fade-up text-center">
-        <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-muted">{p.name}, you are</p>
+        <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-muted">{p.name} — private</p>
         <div className="mt-6 rounded-lg border border-[hsl(var(--ember)/0.5)] bg-[hsl(var(--ember)/0.08)] px-6 py-8">
           <RoleArt game="resistance" role={isSpy ? "spy" : "resistance"} fallback={["#2a1a2a", "#100d0b"]} className="aspect-[4/3] w-full mb-4" />
           <h2 className="font-display text-4xl italic text-[hsl(var(--ember))]">{isSpy ? "Spy" : "Resistance"}</h2>
@@ -156,17 +156,47 @@ const ResistanceLocalBoard: React.FC<GameComponentProps> = ({ players, onComplet
         </div>
         <button
           type="button"
-          onClick={() => {
-            if (nextIdx >= players.length) {
-              setPhase({ kind: "mission-intro", mission: 0, leaderIdx: 0, rejectStreak: 0, missions: [] });
-            } else {
-              setPhase({ kind: "role-pass", playerIdx: nextIdx });
-            }
-          }}
+          onClick={() => setPhase({ kind: "role-hidden", playerIdx: phase.playerIdx })}
           className="mt-10 w-full rounded-md bg-[hsl(var(--ember))] py-3 font-mono text-[11px] uppercase tracking-wider text-bg transition-opacity hover:opacity-90"
         >
-          {nextIdx >= players.length ? "Begin mission 1 →" : "Hide & pass →"}
+          Got it — hide
         </button>
+      </section>
+    );
+  }
+  if (phase.kind === "role-hidden") {
+    const nextIdx = phase.playerIdx + 1;
+    const nextName = nextIdx < players.length ? players[nextIdx].name : null;
+    return (
+      <section className="mx-auto max-w-md animate-fade-up text-center">
+        <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-[hsl(var(--ember))]">Role hidden</p>
+        {nextName ? (
+          <>
+            <h2 className="mt-4 font-display text-4xl italic">Hand the phone to {nextName}.</h2>
+            <p className="mt-3 text-sm text-muted">
+              Screen is safe. Don&apos;t tap until {nextName} is holding it.
+            </p>
+            <button
+              type="button"
+              onClick={() => setPhase({ kind: "role-pass", playerIdx: nextIdx })}
+              className="mt-10 w-full rounded-md border border-border bg-bg/40 py-3 font-mono text-[11px] uppercase tracking-wider text-muted transition-colors hover:border-[hsl(var(--ember)/0.4)] hover:text-fg"
+            >
+              I&apos;ve handed it to {nextName} →
+            </button>
+          </>
+        ) : (
+          <>
+            <h2 className="mt-4 font-display text-4xl italic">All roles assigned.</h2>
+            <p className="mt-3 text-sm text-muted">Put the phone down. Mission 1 begins.</p>
+            <button
+              type="button"
+              onClick={() => setPhase({ kind: "mission-intro", mission: 0, leaderIdx: 0, rejectStreak: 0, missions: [] })}
+              className="mt-10 w-full rounded-md bg-[hsl(var(--ember))] py-3 font-mono text-[11px] uppercase tracking-wider text-bg transition-opacity hover:opacity-90"
+            >
+              Begin mission 1 →
+            </button>
+          </>
+        )}
       </section>
     );
   }

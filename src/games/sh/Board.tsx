@@ -51,6 +51,7 @@ type Phase =
   | { kind: "intro" }
   | { kind: "role-pass"; playerIdx: number }
   | { kind: "role-reveal"; playerIdx: number }
+  | { kind: "role-hidden"; playerIdx: number }
   | { kind: "round-intro"; board: Board; presidentIdx: number; deck: Policy[]; discard: Policy[]; lastChancellor: string | null }
   | { kind: "nominate-chancellor"; board: Board; presidentIdx: number; deck: Policy[]; discard: Policy[]; lastChancellor: string | null }
   | { kind: "vote-pass"; board: Board; presidentIdx: number; chancellorIdx: number; deck: Policy[]; discard: Policy[]; voterIdx: number; votes: Record<string, "ja" | "nein">; lastChancellor: string | null }
@@ -169,11 +170,10 @@ const SecretHitlerLocalBoard: React.FC<GameComponentProps> = ({ players, onCompl
     const fascistTeammates = showFascists
       ? players.filter((pl) => pl.id !== p.id && (roles[pl.id] === "fascist" || (players.length <= 6 && roles[pl.id] === "hitler"))).map((pl) => ({ name: pl.name, role: roles[pl.id] }))
       : [];
-    const nextIdx = phase.playerIdx + 1;
     const roleLabel = role === "liberal" ? "Liberal" : role === "fascist" ? "Fascist" : "Hitler";
     return (
       <section className="mx-auto max-w-md animate-fade-up text-center">
-        <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-muted">{p.name}, your role</p>
+        <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-muted">{p.name} — private</p>
         <div className="mt-6 rounded-lg border border-[hsl(var(--ember)/0.5)] bg-[hsl(var(--ember)/0.08)] px-6 py-8">
           <RoleArt game="sh" role={role} fallback={["#1a1a2a", "#100d0b"]} className="aspect-[4/3] w-full mb-4" />
           <h2 className={`font-display text-4xl italic ${role === "liberal" ? "text-[#4a8abb]" : "text-[hsl(var(--ember))]"}`}>{roleLabel}</h2>
@@ -193,17 +193,47 @@ const SecretHitlerLocalBoard: React.FC<GameComponentProps> = ({ players, onCompl
         </div>
         <button
           type="button"
-          onClick={() => {
-            if (nextIdx >= players.length) {
-              setPhase({ kind: "round-intro", board: { L: 0, F: 0, electionTracker: 0 }, presidentIdx: 0, deck: initialDeck(), discard: [], lastChancellor: null });
-            } else {
-              setPhase({ kind: "role-pass", playerIdx: nextIdx });
-            }
-          }}
+          onClick={() => setPhase({ kind: "role-hidden", playerIdx: phase.playerIdx })}
           className="mt-10 w-full rounded-md bg-[hsl(var(--ember))] py-3 font-mono text-[11px] uppercase tracking-wider text-bg transition-opacity hover:opacity-90"
         >
-          {nextIdx >= players.length ? "Begin round 1 →" : "Hide & pass →"}
+          Got it — hide
         </button>
+      </section>
+    );
+  }
+  if (phase.kind === "role-hidden") {
+    const nextIdx = phase.playerIdx + 1;
+    const nextName = nextIdx < players.length ? players[nextIdx].name : null;
+    return (
+      <section className="mx-auto max-w-md animate-fade-up text-center">
+        <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-[hsl(var(--ember))]">Role hidden</p>
+        {nextName ? (
+          <>
+            <h2 className="mt-4 font-display text-4xl italic">Hand the phone to {nextName}.</h2>
+            <p className="mt-3 text-sm text-muted">
+              Screen is safe. Don&apos;t tap until {nextName} is holding it.
+            </p>
+            <button
+              type="button"
+              onClick={() => setPhase({ kind: "role-pass", playerIdx: nextIdx })}
+              className="mt-10 w-full rounded-md border border-border bg-bg/40 py-3 font-mono text-[11px] uppercase tracking-wider text-muted transition-colors hover:border-[hsl(var(--ember)/0.4)] hover:text-fg"
+            >
+              I&apos;ve handed it to {nextName} →
+            </button>
+          </>
+        ) : (
+          <>
+            <h2 className="mt-4 font-display text-4xl italic">All roles assigned.</h2>
+            <p className="mt-3 text-sm text-muted">Put the phone down. Round 1 begins.</p>
+            <button
+              type="button"
+              onClick={() => setPhase({ kind: "round-intro", board: { L: 0, F: 0, electionTracker: 0 }, presidentIdx: 0, deck: initialDeck(), discard: [], lastChancellor: null })}
+              className="mt-10 w-full rounded-md bg-[hsl(var(--ember))] py-3 font-mono text-[11px] uppercase tracking-wider text-bg transition-opacity hover:opacity-90"
+            >
+              Begin round 1 →
+            </button>
+          </>
+        )}
       </section>
     );
   }

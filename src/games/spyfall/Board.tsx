@@ -89,20 +89,22 @@ export const SpyfallBoard: React.FC<GameComponentProps> = ({ players, onComplete
   // --- reveal phase --- -------------------------------------------
   if (phase.kind === "reveal") {
     const current = assignments[phase.current];
+    const nextIdx = phase.current + 1;
+    const nextName = nextIdx < assignments.length ? assignments[nextIdx].name : null;
     return (
       <RevealCard
         assignment={current}
         location={location}
+        nextPlayerName={nextName}
         onPass={() => {
-          const next = phase.current + 1;
-          if (next >= assignments.length) {
+          if (nextIdx >= assignments.length) {
             setPhase({
               kind: "discussion",
               startedAt: Date.now(),
               durationSec: DISCUSSION_MINUTES * 60,
             });
           } else {
-            setPhase({ kind: "reveal", current: next });
+            setPhase({ kind: "reveal", current: nextIdx });
           }
         }}
       />
@@ -281,65 +283,106 @@ export const SpyfallBoard: React.FC<GameComponentProps> = ({ players, onComplete
 function RevealCard({
   assignment,
   location,
+  nextPlayerName,
   onPass,
 }: {
   assignment: PlayerAssignment;
   location: Location;
+  nextPlayerName: string | null;
   onPass: () => void;
 }) {
-  const [shown, setShown] = useState(false);
-  return (
-    <section className="mx-auto max-w-md animate-fade-up text-center">
-      <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted">Pass the phone to</p>
-      <h2 className="mt-2 font-display text-4xl italic">{assignment.name}</h2>
-      {!shown ? (
+  const [stage, setStage] = useState<"pre" | "shown" | "post">("pre");
+  if (stage === "pre") {
+    return (
+      <section className="mx-auto max-w-md animate-fade-up text-center">
+        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted">Pass the phone to</p>
+        <h2 className="mt-2 font-display text-4xl italic">{assignment.name}</h2>
         <button
           type="button"
-          onClick={() => setShown(true)}
+          onClick={() => setStage("shown")}
           className="mt-10 w-full rounded-md border border-[hsl(var(--ember)/0.4)] bg-[hsl(var(--ember)/0.08)] py-5 font-mono text-[11px] uppercase tracking-[0.2em] text-[hsl(var(--ember))] transition-colors hover:bg-[hsl(var(--ember)/0.16)]"
         >
-          Reveal my card — only I should see
+          I am {assignment.name} — reveal my card
         </button>
-      ) : (
-        <div className="mt-10 rounded-md border border-[hsl(var(--ember)/0.5)] bg-[hsl(var(--ember)/0.06)] px-6 py-8">
-          {assignment.isSpy ? (
-            <>
-              <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-[hsl(var(--ember))]">you are</div>
-              <h3 className="mt-2 font-display text-5xl italic text-[hsl(var(--ember))]">the spy</h3>
-              <p className="mt-4 text-sm leading-relaxed text-muted">
-                You don't know the location. Listen to the answers. Ask questions vague enough to not give yourself away. The locations pool is below — keep it close.
-              </p>
-              <details className="mt-4 text-left">
-                <summary className="cursor-pointer font-mono text-[10px] uppercase tracking-wider text-[hsl(var(--ember))]">
-                  Show locations pool
-                </summary>
-                <div className="mt-2 grid grid-cols-2 gap-1 text-xs text-fg">
-                  {LOCATIONS.map((loc) => (
-                    <span key={loc.name} className="truncate">· {loc.name}</span>
-                  ))}
-                </div>
-              </details>
-            </>
-          ) : (
-            <>
-              <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-[hsl(var(--ember))]">location</div>
-              <h3 className="mt-2 font-display text-4xl italic text-fg">{location.name}</h3>
-              <div className="mt-4 font-mono text-[10px] uppercase tracking-[0.2em] text-muted">your role</div>
-              <div className="mt-1 font-display text-2xl italic text-fg">{assignment.role}</div>
-              <p className="mt-4 text-sm leading-relaxed text-muted">
-                Answer questions about this place without naming it. The spy is listening — don't make it too easy.
-              </p>
-            </>
-          )}
-          <button
-            type="button"
-            onClick={onPass}
-            className="mt-8 w-full rounded-md bg-[hsl(var(--ember))] py-3 font-mono text-[11px] uppercase tracking-wider text-bg transition-opacity hover:opacity-90"
-          >
-            Hide & pass phone →
-          </button>
-        </div>
-      )}
+        <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.2em] text-muted/70">
+          Don&apos;t tap unless the phone is in your hand.
+        </p>
+      </section>
+    );
+  }
+  if (stage === "post") {
+    return (
+      <section className="mx-auto max-w-md animate-fade-up text-center">
+        <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-[hsl(var(--ember))]">Card hidden</p>
+        {nextPlayerName ? (
+          <>
+            <h2 className="mt-4 font-display text-4xl italic">Hand the phone to {nextPlayerName}.</h2>
+            <p className="mt-3 text-sm text-muted">Screen is safe. Don&apos;t tap until {nextPlayerName} is holding it.</p>
+            <button
+              type="button"
+              onClick={onPass}
+              className="mt-10 w-full rounded-md border border-border bg-bg/40 py-3 font-mono text-[11px] uppercase tracking-wider text-muted transition-colors hover:border-[hsl(var(--ember)/0.4)] hover:text-fg"
+            >
+              I&apos;ve handed it to {nextPlayerName} →
+            </button>
+          </>
+        ) : (
+          <>
+            <h2 className="mt-4 font-display text-4xl italic">Everyone&apos;s seen their card.</h2>
+            <p className="mt-3 text-sm text-muted">Put the phone down. Discussion begins.</p>
+            <button
+              type="button"
+              onClick={onPass}
+              className="mt-10 w-full rounded-md bg-[hsl(var(--ember))] py-3 font-mono text-[11px] uppercase tracking-wider text-bg transition-opacity hover:opacity-90"
+            >
+              Begin discussion →
+            </button>
+          </>
+        )}
+      </section>
+    );
+  }
+  return (
+    <section className="mx-auto max-w-md animate-fade-up text-center">
+      <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted">{assignment.name} — private</p>
+      <div className="mt-4 rounded-md border border-[hsl(var(--ember)/0.5)] bg-[hsl(var(--ember)/0.06)] px-6 py-8">
+        {assignment.isSpy ? (
+          <>
+            <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-[hsl(var(--ember))]">you are</div>
+            <h3 className="mt-2 font-display text-5xl italic text-[hsl(var(--ember))]">the spy</h3>
+            <p className="mt-4 text-sm leading-relaxed text-muted">
+              You don&apos;t know the location. Listen to the answers. Ask questions vague enough to not give yourself away. The locations pool is below — keep it close.
+            </p>
+            <details className="mt-4 text-left">
+              <summary className="cursor-pointer font-mono text-[10px] uppercase tracking-wider text-[hsl(var(--ember))]">
+                Show locations pool
+              </summary>
+              <div className="mt-2 grid grid-cols-2 gap-1 text-xs text-fg">
+                {LOCATIONS.map((loc) => (
+                  <span key={loc.name} className="truncate">· {loc.name}</span>
+                ))}
+              </div>
+            </details>
+          </>
+        ) : (
+          <>
+            <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-[hsl(var(--ember))]">location</div>
+            <h3 className="mt-2 font-display text-4xl italic text-fg">{location.name}</h3>
+            <div className="mt-4 font-mono text-[10px] uppercase tracking-[0.2em] text-muted">your role</div>
+            <div className="mt-1 font-display text-2xl italic text-fg">{assignment.role}</div>
+            <p className="mt-4 text-sm leading-relaxed text-muted">
+              Answer questions about this place without naming it. The spy is listening — don&apos;t make it too easy.
+            </p>
+          </>
+        )}
+        <button
+          type="button"
+          onClick={() => setStage("post")}
+          className="mt-8 w-full rounded-md bg-[hsl(var(--ember))] py-3 font-mono text-[11px] uppercase tracking-wider text-bg transition-opacity hover:opacity-90"
+        >
+          Got it — hide
+        </button>
+      </div>
     </section>
   );
 }

@@ -68,6 +68,7 @@ type Phase =
   | { kind: "intro" }
   | { kind: "reveal-pass"; playerIdx: number }
   | { kind: "reveal-hand"; playerIdx: number }
+  | { kind: "reveal-hidden"; playerIdx: number }
   | { kind: "turn-pass" }
   | { kind: "turn-action" }
   | { kind: "pick-target"; action: "assassinate" | "steal" | "coup" }
@@ -186,10 +187,9 @@ const CoupLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQ
   if (phase.kind === "reveal-hand") {
     const p = players[phase.playerIdx];
     const state = core.states[phase.playerIdx];
-    const nextIdx = phase.playerIdx + 1;
     return (
       <section className="mx-auto max-w-md animate-fade-up text-center">
-        <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-muted">{p.name}, your hand</p>
+        <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-muted">{p.name} — private</p>
         <div className="mt-4 grid grid-cols-2 gap-3">
           {state.hand.map((c, i) => (
             <div key={i} className="rounded-lg border border-[hsl(var(--ember)/0.5)] bg-[hsl(var(--ember)/0.08)] p-3 text-center">
@@ -201,14 +201,47 @@ const CoupLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQ
         </div>
         <button
           type="button"
-          onClick={() => {
-            if (nextIdx >= players.length) setPhase({ kind: "turn-pass" });
-            else setPhase({ kind: "reveal-pass", playerIdx: nextIdx });
-          }}
+          onClick={() => setPhase({ kind: "reveal-hidden", playerIdx: phase.playerIdx })}
           className="mt-10 w-full rounded-md bg-[hsl(var(--ember))] py-3 font-mono text-[11px] uppercase tracking-wider text-bg transition-opacity hover:opacity-90"
         >
-          {nextIdx >= players.length ? "Start game →" : "Hide & pass →"}
+          Got it — hide
         </button>
+      </section>
+    );
+  }
+  if (phase.kind === "reveal-hidden") {
+    const nextIdx = phase.playerIdx + 1;
+    const nextName = nextIdx < players.length ? players[nextIdx].name : null;
+    return (
+      <section className="mx-auto max-w-md animate-fade-up text-center">
+        <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-[hsl(var(--ember))]">Hand hidden</p>
+        {nextName ? (
+          <>
+            <h2 className="mt-4 font-display text-4xl italic">Hand the phone to {nextName}.</h2>
+            <p className="mt-3 text-sm text-muted">
+              Screen is safe. Don&apos;t tap until {nextName} is holding it.
+            </p>
+            <button
+              type="button"
+              onClick={() => setPhase({ kind: "reveal-pass", playerIdx: nextIdx })}
+              className="mt-10 w-full rounded-md border border-border bg-bg/40 py-3 font-mono text-[11px] uppercase tracking-wider text-muted transition-colors hover:border-[hsl(var(--ember)/0.4)] hover:text-fg"
+            >
+              I&apos;ve handed it to {nextName} →
+            </button>
+          </>
+        ) : (
+          <>
+            <h2 className="mt-4 font-display text-4xl italic">Everyone&apos;s seen their hand.</h2>
+            <p className="mt-3 text-sm text-muted">Place the phone in the middle. First turn begins.</p>
+            <button
+              type="button"
+              onClick={() => setPhase({ kind: "turn-pass" })}
+              className="mt-10 w-full rounded-md bg-[hsl(var(--ember))] py-3 font-mono text-[11px] uppercase tracking-wider text-bg transition-opacity hover:opacity-90"
+            >
+              Start game →
+            </button>
+          </>
+        )}
       </section>
     );
   }

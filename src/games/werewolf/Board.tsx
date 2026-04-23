@@ -105,6 +105,8 @@ const WerewolfLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete,
   if (state.phase.kind === "reveal") {
     const current = state.players[state.phase.current];
     const role = ROLES[current.role];
+    const nextIdx = state.phase.current + 1;
+    const nextName = nextIdx < state.players.length ? state.players[nextIdx].name : null;
     return (
       <RevealCard
         playerName={current.name}
@@ -112,12 +114,12 @@ const WerewolfLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete,
         roleId={current.role}
         roleDescription={role.description}
         roleAccent={role.accent}
+        nextPlayerName={nextName}
         onPass={() => {
-          const next = state.phase.kind === "reveal" ? state.phase.current + 1 : 0;
-          if (next >= state.players.length) {
+          if (nextIdx >= state.players.length) {
             setState({ ...state, phase: { kind: "night-intro" } });
           } else {
-            setState({ ...state, phase: { kind: "reveal", current: next } });
+            setState({ ...state, phase: { kind: "reveal", current: nextIdx } });
           }
         }}
       />
@@ -408,30 +410,44 @@ interface RevealCardProps {
   roleId: RoleId;
   roleDescription: string;
   roleAccent: string;
+  /** Name of the next player to hand off to, or null if this is the last reveal. */
+  nextPlayerName: string | null;
   onPass: () => void;
 }
-function RevealCard({ playerName, roleName, roleId, roleDescription, roleAccent, onPass }: RevealCardProps) {
-  const [shown, setShown] = useState(false);
-  return (
-    <section className="mx-auto max-w-md animate-fade-up text-center">
-      <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted">Pass the phone to</p>
-      <h2 className="mt-2 font-display text-4xl italic">{playerName}</h2>
-      {!shown ? (
+function RevealCard({ playerName, roleName, roleId, roleDescription, roleAccent, nextPlayerName, onPass }: RevealCardProps) {
+  // Three stages so the role never lingers on screen during a pass:
+  //   "pre"   — "Pass to X" header, tap to reveal
+  //   "shown" — role visible, tap to hide
+  //   "post"  — role hidden, "Hand phone to NEXT" prompt, tap to advance
+  const [stage, setStage] = useState<"pre" | "shown" | "post">("pre");
+
+  if (stage === "pre") {
+    return (
+      <section className="mx-auto max-w-md animate-fade-up text-center">
+        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted">Pass the phone to</p>
+        <h2 className="mt-2 font-display text-4xl italic">{playerName}</h2>
         <button
           type="button"
           onClick={() => {
-            setShown(true);
-            // No narration on role reveal — would leak the role to
-            // anyone near the phone ("you are a villager" is itself
-            // a tell). Role shows visually only.
+            setStage("shown");
             void roleId;
           }}
           className="mt-10 w-full rounded-md border border-[hsl(var(--ember)/0.4)] bg-[hsl(var(--ember)/0.08)] py-5 font-mono text-[11px] uppercase tracking-[0.2em] text-[hsl(var(--ember))] transition-colors hover:bg-[hsl(var(--ember)/0.16)]"
         >
-          Reveal my role — only I should see
+          I am {playerName} — reveal my role
         </button>
-      ) : (
-        <div className="mt-10 rounded-md border px-6 py-8" style={{ borderColor: roleAccent }}>
+        <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.2em] text-muted/70">
+          Don&apos;t tap unless the phone is in your hand.
+        </p>
+      </section>
+    );
+  }
+
+  if (stage === "shown") {
+    return (
+      <section className="mx-auto max-w-md animate-fade-up text-center">
+        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted">{playerName} — private</p>
+        <div className="mt-4 rounded-md border px-6 py-8" style={{ borderColor: roleAccent }}>
           <RoleArt game="werewolf" role={roleId} fallback={["#2a1a10", "#100d0b"]} className="aspect-[4/3] w-full mb-4" />
           <div className="font-mono text-[10px] uppercase tracking-[0.3em]" style={{ color: roleAccent }}>
             your role
@@ -442,12 +458,46 @@ function RevealCard({ playerName, roleName, roleId, roleDescription, roleAccent,
           <p className="mt-4 text-sm leading-relaxed text-fg/90">{roleDescription}</p>
           <button
             type="button"
-            onClick={onPass}
+            onClick={() => setStage("post")}
             className="mt-8 w-full rounded-md bg-[hsl(var(--ember))] py-3 font-mono text-[11px] uppercase tracking-wider text-bg transition-opacity hover:opacity-90"
           >
-            Hide & pass phone →
+            Got it — hide
           </button>
         </div>
+      </section>
+    );
+  }
+
+  // stage === "post" — card is hidden, waiting for the physical handoff
+  return (
+    <section className="mx-auto max-w-md animate-fade-up text-center">
+      <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-[hsl(var(--ember))]">Role hidden</p>
+      {nextPlayerName ? (
+        <>
+          <h2 className="mt-4 font-display text-4xl italic">Hand the phone to {nextPlayerName}.</h2>
+          <p className="mt-3 text-sm text-muted">
+            Screen is safe to pass. Don&apos;t tap until {nextPlayerName} is holding it.
+          </p>
+          <button
+            type="button"
+            onClick={onPass}
+            className="mt-10 w-full rounded-md border border-border bg-bg/40 py-3 font-mono text-[11px] uppercase tracking-wider text-muted transition-colors hover:border-[hsl(var(--ember)/0.4)] hover:text-fg"
+          >
+            I&apos;ve handed it to {nextPlayerName} →
+          </button>
+        </>
+      ) : (
+        <>
+          <h2 className="mt-4 font-display text-4xl italic">Everyone&apos;s seen their role.</h2>
+          <p className="mt-3 text-sm text-muted">Put the phone down in the middle of the table. Everyone close your eyes.</p>
+          <button
+            type="button"
+            onClick={onPass}
+            className="mt-10 w-full rounded-md bg-[hsl(var(--ember))] py-3 font-mono text-[11px] uppercase tracking-wider text-bg transition-opacity hover:opacity-90"
+          >
+            Begin the night →
+          </button>
+        </>
       )}
     </section>
   );

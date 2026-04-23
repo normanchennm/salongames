@@ -41,6 +41,7 @@ type Phase =
   | { kind: "intro" }
   | { kind: "reveal-pass"; playerIndex: number; word: string; assignments: RoleAssignment[] }
   | { kind: "reveal-role"; playerIndex: number; word: string; assignments: RoleAssignment[] }
+  | { kind: "reveal-hidden"; playerIndex: number; word: string; assignments: RoleAssignment[] }
   | { kind: "guess-intro"; word: string; assignments: RoleAssignment[] }
   | { kind: "guessing"; word: string; assignments: RoleAssignment[]; endsAt: number }
   | { kind: "guess-timeout"; word: string; assignments: RoleAssignment[] }
@@ -162,10 +163,9 @@ const InsiderLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, 
     const p = players[phase.playerIndex];
     const a = phase.assignments.find((x) => x.playerId === p.id);
     const role = a?.role ?? "commoner";
-    const nextIdx = phase.playerIndex + 1;
     return (
       <section className="mx-auto max-w-md animate-fade-up text-center">
-        <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-muted">{p.name}, your role</p>
+        <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-muted">{p.name} — private</p>
         <div className="mt-6 rounded-lg border border-[hsl(var(--ember)/0.5)] bg-[hsl(var(--ember)/0.08)] px-6 py-8">
           <RoleArt game="insider" role={role} fallback={["#2a1a4a", "#100d0b"]} className="aspect-[4/3] w-full mb-4" />
           <h2 className="font-display text-4xl italic text-[hsl(var(--ember))]">
@@ -191,17 +191,49 @@ const InsiderLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, 
         </div>
         <button
           type="button"
-          onClick={() => {
-            if (nextIdx >= players.length) {
-              setPhase({ kind: "guess-intro", word: phase.word, assignments: phase.assignments });
-            } else {
-              setPhase({ kind: "reveal-pass", playerIndex: nextIdx, word: phase.word, assignments: phase.assignments });
-            }
-          }}
+          onClick={() => setPhase({ kind: "reveal-hidden", playerIndex: phase.playerIndex, word: phase.word, assignments: phase.assignments })}
           className="mt-10 w-full rounded-md bg-[hsl(var(--ember))] py-3 font-mono text-[11px] uppercase tracking-wider text-bg transition-opacity hover:opacity-90"
         >
-          {nextIdx >= players.length ? "Start →" : `Hide & pass to ${players[nextIdx].name} →`}
+          Got it — hide
         </button>
+      </section>
+    );
+  }
+
+  // --- REVEAL HIDDEN (pass safely) ------------------------------
+  if (phase.kind === "reveal-hidden") {
+    const nextIdx = phase.playerIndex + 1;
+    const nextName = nextIdx < players.length ? players[nextIdx].name : null;
+    return (
+      <section className="mx-auto max-w-md animate-fade-up text-center">
+        <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-[hsl(var(--ember))]">Role hidden</p>
+        {nextName ? (
+          <>
+            <h2 className="mt-4 font-display text-4xl italic">Hand the phone to {nextName}.</h2>
+            <p className="mt-3 text-sm text-muted">
+              Screen is safe. Don&apos;t tap until {nextName} is holding it.
+            </p>
+            <button
+              type="button"
+              onClick={() => setPhase({ kind: "reveal-pass", playerIndex: nextIdx, word: phase.word, assignments: phase.assignments })}
+              className="mt-10 w-full rounded-md border border-border bg-bg/40 py-3 font-mono text-[11px] uppercase tracking-wider text-muted transition-colors hover:border-[hsl(var(--ember)/0.4)] hover:text-fg"
+            >
+              I&apos;ve handed it to {nextName} →
+            </button>
+          </>
+        ) : (
+          <>
+            <h2 className="mt-4 font-display text-4xl italic">Everyone&apos;s seen their role.</h2>
+            <p className="mt-3 text-sm text-muted">Put the phone down. Start asking.</p>
+            <button
+              type="button"
+              onClick={() => setPhase({ kind: "guess-intro", word: phase.word, assignments: phase.assignments })}
+              className="mt-10 w-full rounded-md bg-[hsl(var(--ember))] py-3 font-mono text-[11px] uppercase tracking-wider text-bg transition-opacity hover:opacity-90"
+            >
+              Start →
+            </button>
+          </>
+        )}
       </section>
     );
   }
