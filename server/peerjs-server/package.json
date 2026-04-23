@@ -1,0 +1,16 @@
+{
+  "name": "salongames-peerjs-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "WebSocket signaling broker for salongames remote play. Deploys to Azure App Service.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "peer": "^1.0.2"
+  }
+}

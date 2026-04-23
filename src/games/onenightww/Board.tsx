@@ -258,7 +258,12 @@ const OneNightWWLocalBoard: React.FC<GameComponentProps> = ({ players, onComplet
         ) : (
           <>
             <h2 className="mt-4 font-display text-4xl italic">Everyone&apos;s seen their role.</h2>
-            <p className="mt-3 text-sm text-muted">Put the phone down in the middle. Everyone close your eyes.</p>
+            <p className="mt-3 text-sm text-muted">
+              Put the phone face-up in the middle of the table. Everyone close
+              your eyes. The narrator will call each role — only the called role
+              opens their eyes and reaches for the phone. Nobody passes anything
+              with eyes closed.
+            </p>
             <button
               type="button"
               onClick={() => setPhase({ kind: "night-intro" })}
@@ -279,7 +284,9 @@ const OneNightWWLocalBoard: React.FC<GameComponentProps> = ({ players, onComplet
         <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-muted">Night</p>
         <h2 className="mt-4 font-display text-4xl italic">Eyes closed.</h2>
         <p className="mt-4 text-sm text-muted">
-          The phone will call each role in turn. When your starting role is called, it&apos;s your action. Keep quiet between turns.
+          Phone stays in the middle. The narrator calls each role — only the
+          called role opens their eyes, leans in to the phone, makes their
+          choice, and closes their eyes again. Nobody passes.
         </p>
         <button
           type="button"
@@ -301,16 +308,17 @@ const OneNightWWLocalBoard: React.FC<GameComponentProps> = ({ players, onComplet
     return (
       <section className="mx-auto max-w-md animate-fade-up text-center">
         <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-[hsl(var(--ember))]">Werewolves</p>
-        <h2 className="mt-4 font-display text-3xl italic">Any werewolf: take the phone.</h2>
+        <h2 className="mt-4 font-display text-3xl italic">Open your eyes. Look at each other.</h2>
         <p className="mt-3 text-sm text-muted">
-          Pass once so one werewolf sees who the others are. Then hide.
+          Phone stays in the middle. Any werewolf: lean in and tap to see the
+          other wolves on screen. Then close your eyes.
         </p>
         <button
           type="button"
           onClick={() => setPhase({ kind: "night-werewolves-reveal" })}
           className="mt-10 w-full rounded-md bg-[hsl(var(--ember))] py-3 font-mono text-[11px] uppercase tracking-wider text-bg transition-opacity hover:opacity-90"
         >
-          Reveal werewolves →
+          Show the wolves →
         </button>
       </section>
     );
@@ -355,7 +363,8 @@ const OneNightWWLocalBoard: React.FC<GameComponentProps> = ({ players, onComplet
     return (
       <section className="mx-auto max-w-md animate-fade-up text-center">
         <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-[hsl(var(--ember))]">Seer</p>
-        <h2 className="mt-4 font-display text-3xl italic">{seer?.name}, take the phone.</h2>
+        <h2 className="mt-4 font-display text-3xl italic">{seer?.name}, open your eyes.</h2>
+        <p className="mt-3 text-sm text-muted">Phone is in the middle — lean in.</p>
         <button type="button" onClick={() => setPhase({ kind: "night-seer-choose" })} className="mt-10 w-full rounded-md bg-[hsl(var(--ember))] py-3 font-mono text-[11px] uppercase tracking-wider text-bg transition-opacity hover:opacity-90">
           Begin →
         </button>
@@ -454,7 +463,8 @@ const OneNightWWLocalBoard: React.FC<GameComponentProps> = ({ players, onComplet
     return (
       <section className="mx-auto max-w-md animate-fade-up text-center">
         <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-[hsl(var(--ember))]">Robber</p>
-        <h2 className="mt-4 font-display text-3xl italic">{robber?.name}, take the phone.</h2>
+        <h2 className="mt-4 font-display text-3xl italic">{robber?.name}, open your eyes.</h2>
+        <p className="mt-3 text-sm text-muted">Phone is in the middle — lean in.</p>
         <button type="button" onClick={() => setPhase({ kind: "night-robber-pick" })} className="mt-10 w-full rounded-md bg-[hsl(var(--ember))] py-3 font-mono text-[11px] uppercase tracking-wider text-bg transition-opacity hover:opacity-90">
           Begin →
         </button>
@@ -518,7 +528,8 @@ const OneNightWWLocalBoard: React.FC<GameComponentProps> = ({ players, onComplet
     return (
       <section className="mx-auto max-w-md animate-fade-up text-center">
         <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-[hsl(var(--ember))]">Troublemaker</p>
-        <h2 className="mt-4 font-display text-3xl italic">{tm?.name}, take the phone.</h2>
+        <h2 className="mt-4 font-display text-3xl italic">{tm?.name}, open your eyes.</h2>
+        <p className="mt-3 text-sm text-muted">Phone is in the middle — lean in.</p>
         <button type="button" onClick={() => setPhase({ kind: "night-troublemaker-pick1" })} className="mt-10 w-full rounded-md bg-[hsl(var(--ember))] py-3 font-mono text-[11px] uppercase tracking-wider text-bg transition-opacity hover:opacity-90">
           Begin →
         </button>

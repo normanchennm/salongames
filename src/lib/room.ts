@@ -150,36 +150,29 @@ function peerIdFor(): string {
 
 function now() { return Date.now(); }
 
-// WebRTC ICE servers. PeerJS's default is Google STUN only — that
-// handles same-device and most same-LAN cases but fails across
-// symmetric NAT (common on mobile carriers and some home routers),
-// which was showing up as "works across tabs but not across devices".
-// Free public TURN relays from openrelay.metered.ca handle the
-// fallback when direct hole-punching can't succeed. Credentials are
-// public and rate-limited — fine for a party game, not for scale.
-const ICE_SERVERS = [
+// WebRTC ICE servers. Google + Cloudflare public STUN for hole-
+// punching. No TURN by default: openrelay.metered.ca (historical free
+// public TURN) was sunsetted — all ports stall now, which actively
+// slowed ICE gathering when included. Cross-network (symmetric NAT)
+// needs a real TURN server; plan is to wire Metered.ca's free tier
+// behind an env-configurable key when we set one up.
+const ICE_SERVERS: RTCIceServer[] = [
   { urls: "stun:stun.l.google.com:19302" },
   { urls: "stun:stun1.l.google.com:19302" },
   { urls: "stun:stun.cloudflare.com:3478" },
-  {
-    urls: "turn:openrelay.metered.ca:80",
-    username: "openrelayproject",
-    credential: "openrelayproject",
-  },
-  {
-    urls: "turn:openrelay.metered.ca:443",
-    username: "openrelayproject",
-    credential: "openrelayproject",
-  },
-  {
-    urls: "turn:openrelay.metered.ca:443?transport=tcp",
-    username: "openrelayproject",
-    credential: "openrelayproject",
-  },
 ];
 
+// Self-hosted PeerJS signaling broker on Azure App Service. Replaces
+// peerjs.com (public broker's WebSocket upgrade started returning
+// ERR_SSL_VERSION_OR_CIPHER_MISMATCH in Chromium, which silently
+// broke every room). Same protocol, just our host/key.
 const PEER_OPTS = {
-  debug: 1,
+  debug: 2,
+  host: "salongames-peer-b1.azurewebsites.net",
+  port: 443,
+  path: "/peerjs",
+  secure: true,
+  key: "salongames",
   config: { iceServers: ICE_SERVERS },
 };
 
@@ -293,6 +286,11 @@ class Host<S, A> implements RoomHandle<S, A> {
             joinedAt: now(),
           });
         }
+        // Rebuild + emit so the host's own UI reflects the new roster.
+        // Without this the host renders a stale player list until some
+        // other event (disconnect, state mutation) triggers an emit.
+        this.snapshot = this.buildSnapshot("ready");
+        this.emit();
         this.broadcastState();
       } else if (msg.type === "action") {
         this.applyAction(msg.action, conn.peer);
@@ -460,11 +458,11 @@ class Joiner<S, A> implements RoomHandle<S, A> {
     this.connectTimeout = setTimeout(() => {
       if (this.snapshot.status === "connecting") {
         this.errorReason = this.errorReason
-          ?? `Still can't reach the room. The code "${this.code.toUpperCase()}" might be wrong, or the host may not have opened the room yet.`;
+          ?? `Still can't reach the room after 30 seconds. The code "${this.code.toUpperCase()}" might be wrong, the host may not have opened the room yet, or your network may be blocking peer-to-peer connections. Try again, or ask the host to share a fresh code.`;
         this.snapshot = this.buildSnapshot("disconnected");
         this.emit();
       }
-    }, 15_000);
+    }, 30_000);
   }
 
   private buildSnapshot(status: RoomSnapshot<S>["status"]): RoomSnapshot<S> {
