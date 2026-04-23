@@ -47,10 +47,25 @@ export function RoomLobby<S>({
         className="mx-auto max-w-md animate-fade-up py-16 text-center"
       >
         <Loader2 className="mx-auto h-5 w-5 animate-spin text-[hsl(var(--ember))]" />
-        <p className="mt-6 font-display text-3xl italic">Opening a room…</p>
-        <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.25em] text-muted">
-          registering with the signaling broker
+        <p className="mt-6 font-display text-3xl italic">
+          {snap?.me.isHost ?? true ? "Opening a room…" : "Joining the room…"}
         </p>
+        <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.25em] text-muted">
+          {snap?.me.isHost ?? true
+            ? "registering with the signaling broker"
+            : `looking for code ${snap?.code ?? ""}`}
+        </p>
+        <p className="mt-6 max-w-sm mx-auto font-mono text-[10px] italic leading-relaxed text-muted/70">
+          taking a while? the host may not have opened the room yet —
+          or the code is off by one letter.
+        </p>
+        <button
+          type="button"
+          onClick={onLeave}
+          className="mt-8 font-mono text-[11px] uppercase tracking-[0.25em] text-muted underline decoration-dotted underline-offset-[6px] hover:text-fg"
+        >
+          cancel
+        </button>
       </div>
     );
   }
@@ -70,6 +85,7 @@ export function RoomLobby<S>({
     );
   }
   if (snap.status === "disconnected") {
+    const reason = snap.errorReason;
     return (
       <div
         role="status"
@@ -77,10 +93,12 @@ export function RoomLobby<S>({
         className="mx-auto max-w-md animate-fade-up py-16 text-center"
       >
         <span className="mx-auto block h-2 w-2 rounded-full border border-[hsl(var(--ember))]" aria-hidden />
-        <p className="mt-6 font-display text-3xl italic">Room closed.</p>
-        <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted">
-          The host left and no one else at the table was ready to
-          take over the code.
+        <p className="mt-6 font-display text-3xl italic">
+          {reason ? "Couldn't join." : "Room closed."}
+        </p>
+        <p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-muted">
+          {reason
+            ?? "The host left and no one else at the table was ready to take over the code."}
         </p>
         <button
           type="button"

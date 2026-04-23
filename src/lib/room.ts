@@ -69,6 +69,10 @@ export interface RoomSnapshot<S> {
   players: RemotePlayer[];
   state: S | null;
   status: "connecting" | "ready" | "host-migrating" | "disconnected";
+  /** Set when status transitions to "disconnected" via an error path
+   *  (bad code, broker unreachable, etc.) so the UI can show something
+   *  more specific than a generic "Room closed." */
+  errorReason?: string;
 }
 
 type HostMessage<S> =
@@ -356,8 +360,10 @@ class Joiner<S, A> implements RoomHandle<S, A> {
   private myName: string;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+  private connectTimeout: ReturnType<typeof setTimeout> | null = null;
   private lastHostSeen = now();
   private migrationAttempted = false;
+  private errorReason: string | null = null;
 
   constructor(code: string, playerName: string, gameId: string, existingPeerId?: string) {
     this.code = code;
@@ -378,17 +384,45 @@ class Joiner<S, A> implements RoomHandle<S, A> {
       this.connectToHost();
     });
     this.peer.on("error", (err: unknown) => {
-      // "unavailable-id" on reload — pick a fresh id and retry once
-      const e = err as { type?: string };
+      const e = err as { type?: string; message?: string };
+      // "unavailable-id" on reload — pick a fresh id and retry once.
       if (e.type === "unavailable-id") {
         this.myPeerId = peerIdFor();
         this.peer.destroy();
         this.peer = new Peer(this.myPeerId, { debug: 1 });
         this.peer.on("open", () => this.connectToHost());
-      } else {
-        console.warn("[room joiner] peer error", err);
+        return;
       }
+      // "peer-unavailable" = the host id doesn't exist. Means the code
+      // is wrong, or the host hasn't opened the room yet, or the host
+      // closed the room. Surface to the UI rather than silently hanging.
+      if (e.type === "peer-unavailable") {
+        this.errorReason = `No room with the code "${this.code.toUpperCase()}" is open right now. Double-check the code, or ask the host to open a room first.`;
+        this.snapshot = this.buildSnapshot("disconnected");
+        this.emit();
+        return;
+      }
+      // Other fatal classes: network down, broker down, ssl, etc.
+      if (e.type === "network" || e.type === "server-error" || e.type === "socket-error" || e.type === "socket-closed" || e.type === "ssl-unavailable" || e.type === "browser-incompatible") {
+        this.errorReason = "Can't reach the signaling broker. Check your internet connection, then try again.";
+        this.snapshot = this.buildSnapshot("disconnected");
+        this.emit();
+        return;
+      }
+      console.warn("[room joiner] peer error", err);
     });
+
+    // Safety timeout — if we never open OR never reach the host within
+    // 15 seconds, surface an error. PeerJS often resolves quickly; this
+    // catches the silent-hang case where neither open nor error fires.
+    this.connectTimeout = setTimeout(() => {
+      if (this.snapshot.status === "connecting") {
+        this.errorReason = this.errorReason
+          ?? `Still can't reach the room. The code "${this.code.toUpperCase()}" might be wrong, or the host may not have opened the room yet.`;
+        this.snapshot = this.buildSnapshot("disconnected");
+        this.emit();
+      }
+    }, 15_000);
   }
 
   private buildSnapshot(status: RoomSnapshot<S>["status"]): RoomSnapshot<S> {
@@ -406,6 +440,7 @@ class Joiner<S, A> implements RoomHandle<S, A> {
       players: this.players.slice(),
       state: this.state,
       status,
+      errorReason: status === "disconnected" ? this.errorReason ?? undefined : undefined,
     };
   }
 
@@ -423,6 +458,8 @@ class Joiner<S, A> implements RoomHandle<S, A> {
       this.emit();
       conn.send({ type: "hello", name: this.myName } as PeerMessage<A>);
       this.startHeartbeat();
+      // Clear the connect-deadline timer — we're in.
+      if (this.connectTimeout) { clearTimeout(this.connectTimeout); this.connectTimeout = null; }
     });
     conn.on("data", (raw) => {
       const msg = raw as HostMessage<S>;
@@ -444,9 +481,24 @@ class Joiner<S, A> implements RoomHandle<S, A> {
       this.hostConn = null;
       this.handleHostLoss();
     });
-    conn.on("error", (err) => {
-      console.warn("[room joiner] conn error", err);
+    conn.on("error", (err: unknown) => {
+      const e = err as { type?: string; message?: string };
+      // Conn-level peer-unavailable fires here too (when DataConnection
+      // couldn't find the target). Surface instead of logging silently.
+      if (e.type === "peer-unavailable" && this.snapshot.status !== "ready") {
+        this.errorReason = `No room with the code "${this.code.toUpperCase()}" is open right now. Double-check the code, or ask the host to open a room first.`;
+        this.snapshot = this.buildSnapshot("disconnected");
+        this.emit();
+      } else {
+        console.warn("[room joiner] conn error", err);
+      }
     });
+  }
+
+  /** Expose the human-readable error reason so the lobby UI can show
+   *  something specific rather than a generic "Room closed." */
+  getErrorReason(): string | null {
+    return this.errorReason;
   }
 
   private handleHostLoss(): void {
@@ -532,6 +584,7 @@ class Joiner<S, A> implements RoomHandle<S, A> {
   leave(): void {
     if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+    if (this.connectTimeout) clearTimeout(this.connectTimeout);
     try { this.hostConn?.close(); } catch {}
     try { this.peer.destroy(); } catch {}
     this.subscribers.clear();
