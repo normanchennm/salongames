@@ -6,6 +6,7 @@ import { playCue, MAFIA_CUES } from "@/lib/narrator";
 import { useScrollToTop } from "@/lib/useScrollToTop";
 import { ROLES, defaultRoleMix, shuffle, type RoleId } from "./roles";
 import { RoleArt } from "@/components/RoleArt";
+import { MafiaRemoteBoard } from "./RemoteBoard";
 
 /** Mafia pass-and-play MVP. Covers the full loop:
  *  lobby → secret role reveal → night phase → day discussion →
@@ -37,7 +38,12 @@ interface PlayerState {
   doctorSelfProtectUsed?: boolean;
 }
 
-export const MafiaBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
+export const MafiaBoard: React.FC<GameComponentProps> = (props) => {
+  if (props.remote) return <MafiaRemoteBoard {...props} remote={props.remote} />;
+  return <MafiaLocalBoard {...props} />;
+};
+
+const MafiaLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
   const startedAt = useMemo(() => Date.now(), []);
   const [state, setState] = useState(() => initialState(players));
   const alive = state.players.filter((p) => p.alive);
