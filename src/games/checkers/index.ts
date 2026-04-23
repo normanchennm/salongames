@@ -14,6 +14,7 @@ const checkers: Game = {
   description:
     "American-style checkers on an 8×8 board. Move one square diagonally forward. Jumping an enemy captures it; chain jumps are mandatory to finish. Reach the far row and the piece is crowned to move backward too. Jumps are optional in this ruleset. Capture every enemy or leave them with no legal move.",
   Component: CheckersBoard,
+  supportsRemote: true,
 };
 
 export default checkers;

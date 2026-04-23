@@ -14,6 +14,7 @@ const reversi: Game = {
   description:
     "Also known as Othello. Place a disc to flank the opponent between yours — every flanked run flips. Black opens. No legal move forces a pass. When neither side can move, the majority on the board wins. Legal squares are marked.",
   Component: ReversiBoard,
+  supportsRemote: true,
 };
 
 export default reversi;

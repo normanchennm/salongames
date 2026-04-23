@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
+import { ReversiRemoteBoard } from "./RemoteBoard";
 
 /** Reversi / Othello — 8x8, flanking captures.
  *
@@ -76,7 +77,12 @@ function countDiscs(g: Grid): { B: number; W: number } {
   return { B, W };
 }
 
-export const ReversiBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
+export const ReversiBoard: React.FC<GameComponentProps> = (props) => {
+  if (props.remote) return <ReversiRemoteBoard {...props} remote={props.remote} />;
+  return <ReversiLocalBoard {...props} />;
+};
+
+const ReversiLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
   const startedAt = useMemo(() => Date.now(), []);
   const [grid, setGrid] = useState<Grid>(() => startGrid());
   const [turn, setTurn] = useState<"B" | "W">("B");

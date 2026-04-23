@@ -14,6 +14,7 @@ const mancala: Game = {
   description:
     "Two rows of six pits, two stores, four stones in each starting pit. Pick up a pit's stones and sow one per pit counter-clockwise, passing your store and skipping the opponent's. Last stone in your store = another turn. Last stone in your empty pit captures the opposite pit's stones. Row empty ends the game; most stones wins.",
   Component: MancalaBoard,
+  supportsRemote: true,
 };
 
 export default mancala;

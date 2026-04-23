@@ -24,6 +24,11 @@ import { heartsRemoteInitialState, heartsRemoteReducer } from "./hearts/remote";
 import { spadesRemoteInitialState, spadesRemoteReducer } from "./spades/remote";
 import { rummyRemoteInitialState, rummyRemoteReducer } from "./rummy/remote";
 import { coupRemoteInitialState, coupRemoteReducer } from "./coup/remote";
+import { tttRemoteInitialState, tttRemoteReducer } from "./tictactoe/remote";
+import { c4RemoteInitialState, c4RemoteReducer } from "./connect4/remote";
+import { reversiRemoteInitialState, reversiRemoteReducer } from "./reversi/remote";
+import { mancalaRemoteInitialState, mancalaRemoteReducer } from "./mancala/remote";
+import { checkersRemoteInitialState, checkersRemoteReducer } from "./checkers/remote";
 
 export const REMOTE_CONFIGS: Record<string, RemoteGameConfig> = {
   fibbage: { initialState: fibRemoteInitialState, reducer: fibRemoteReducer as RemoteGameConfig["reducer"] },
@@ -42,6 +47,11 @@ export const REMOTE_CONFIGS: Record<string, RemoteGameConfig> = {
   spades: { initialState: spadesRemoteInitialState, reducer: spadesRemoteReducer as RemoteGameConfig["reducer"] },
   rummy: { initialState: rummyRemoteInitialState, reducer: rummyRemoteReducer as RemoteGameConfig["reducer"] },
   coup: { initialState: coupRemoteInitialState, reducer: coupRemoteReducer as RemoteGameConfig["reducer"] },
+  tictactoe: { initialState: tttRemoteInitialState, reducer: tttRemoteReducer as RemoteGameConfig["reducer"] },
+  connect4: { initialState: c4RemoteInitialState, reducer: c4RemoteReducer as RemoteGameConfig["reducer"] },
+  reversi: { initialState: reversiRemoteInitialState, reducer: reversiRemoteReducer as RemoteGameConfig["reducer"] },
+  mancala: { initialState: mancalaRemoteInitialState, reducer: mancalaRemoteReducer as RemoteGameConfig["reducer"] },
+  checkers: { initialState: checkersRemoteInitialState, reducer: checkersRemoteReducer as RemoteGameConfig["reducer"] },
 };
 
 export function getRemoteConfig(gameId: string): RemoteGameConfig | undefined {

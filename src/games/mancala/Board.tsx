@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
+import { MancalaRemoteBoard } from "./RemoteBoard";
 
 /** Mancala (Kalah variant). Board: two rows of 6 pits + 2 stores.
  *  Start: 4 stones per pit. Sow counter-clockwise one per pit,
@@ -74,7 +75,12 @@ function sweepRemaining(b: number[]): number[] {
   return next;
 }
 
-export const MancalaBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
+export const MancalaBoard: React.FC<GameComponentProps> = (props) => {
+  if (props.remote) return <MancalaRemoteBoard {...props} remote={props.remote} />;
+  return <MancalaLocalBoard {...props} />;
+};
+
+const MancalaLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
   const startedAt = useMemo(() => Date.now(), []);
   const [board, setBoard] = useState<number[]>(() => newBoard());
   const [turn, setTurn] = useState<"A" | "B">("A");

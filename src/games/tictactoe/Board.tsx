@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
+import { TicTacToeRemoteBoard } from "./RemoteBoard";
 
 /** Tic-Tac-Toe — 2 players, one board, strict turn-taking. Persisted
  *  in component state only; no history, no undo. */
@@ -26,7 +27,12 @@ function detectWin(b: Board): { line: [number, number, number]; mark: "X" | "O" 
   return null;
 }
 
-export const TicTacToeBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
+export const TicTacToeBoard: React.FC<GameComponentProps> = (props) => {
+  if (props.remote) return <TicTacToeRemoteBoard {...props} remote={props.remote} />;
+  return <TicTacToeLocalBoard {...props} />;
+};
+
+const TicTacToeLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
   const startedAt = useMemo(() => Date.now(), []);
   const [board, setBoard] = useState<Board>([null, null, null, null, null, null, null, null, null]);
   const [turn, setTurn] = useState<"X" | "O">("X");

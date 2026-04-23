@@ -14,6 +14,7 @@ const tictactoe: Game = {
   description:
     "The classic. X goes first. Three in a row wins; a full board is a cat's game. Play-again keeps the same pair on the hot seat.",
   Component: TicTacToeBoard,
+  supportsRemote: true,
 };
 
 export default tictactoe;

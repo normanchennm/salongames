@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
+import { Connect4RemoteBoard } from "./RemoteBoard";
 
 /** Connect 4 — 7 columns × 6 rows, gravity drop. Standard ruleset:
  *  first to four-in-a-row (horizontal / vertical / either diagonal)
@@ -52,7 +53,12 @@ function detectWin(grid: Grid): { line: [number, number][]; disc: "R" | "Y" } | 
   return null;
 }
 
-export const Connect4Board: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
+export const Connect4Board: React.FC<GameComponentProps> = (props) => {
+  if (props.remote) return <Connect4RemoteBoard {...props} remote={props.remote} />;
+  return <Connect4LocalBoard {...props} />;
+};
+
+const Connect4LocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
   const startedAt = useMemo(() => Date.now(), []);
   const [grid, setGrid] = useState<Grid>(() => emptyGrid());
   const [turn, setTurn] = useState<"R" | "Y">("R");

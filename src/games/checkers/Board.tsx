@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
+import { CheckersRemoteBoard } from "./RemoteBoard";
 
 /** American-style Checkers, 8x8.
  *
@@ -106,7 +107,12 @@ function hasAnyMoves(g: Grid, color: "dark" | "light"): boolean {
   return false;
 }
 
-export const CheckersBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
+export const CheckersBoard: React.FC<GameComponentProps> = (props) => {
+  if (props.remote) return <CheckersRemoteBoard {...props} remote={props.remote} />;
+  return <CheckersLocalBoard {...props} />;
+};
+
+const CheckersLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
   const startedAt = useMemo(() => Date.now(), []);
   const [grid, setGrid] = useState<Grid>(() => startGrid());
   const [turn, setTurn] = useState<"dark" | "light">("dark");

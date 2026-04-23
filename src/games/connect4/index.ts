@@ -14,6 +14,7 @@ const connect4: Game = {
   description:
     "Seven columns, six rows, gravity. Tap a column to drop a disc. First to connect four — row, column, or diagonal — wins. Red starts.",
   Component: Connect4Board,
+  supportsRemote: true,
 };
 
 export default connect4;
