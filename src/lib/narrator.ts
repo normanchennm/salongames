@@ -32,9 +32,17 @@ export function setMuted(muted: boolean): void {
 // while the previous cue is still playing.
 let current: HTMLAudioElement | null = null;
 
-export function playCue(path: string): Promise<void> {
-  if (typeof window === "undefined") return Promise.resolve();
-  if (isMuted()) return Promise.resolve();
+export interface PlayCueOpts {
+  /** Fires once when playback finishes normally, errors out, or when
+   *  muted. Used by auto-advance flows (ONWW solo) to drive the next
+   *  phase the moment the narrator stops talking. */
+  onEnded?: () => void;
+}
+
+export function playCue(path: string, opts?: PlayCueOpts): Promise<void> {
+  const fire = () => opts?.onEnded?.();
+  if (typeof window === "undefined") { fire(); return Promise.resolve(); }
+  if (isMuted()) { fire(); return Promise.resolve(); }
   // Stop any in-flight cue first. Overlapping narration reads as a bug.
   if (current) {
     try {
@@ -44,10 +52,18 @@ export function playCue(path: string): Promise<void> {
   }
   const audio = new Audio(path);
   current = audio;
+  let fired = false;
+  const once = () => { if (fired) return; fired = true; fire(); };
+  if (opts?.onEnded) {
+    audio.addEventListener("ended", once, { once: true });
+    audio.addEventListener("error", once, { once: true });
+  }
   return audio.play().catch(() => {
-    // Autoplay blocked or file missing — silent no-op. Mobile Safari
-    // blocks audio until a user gesture; every phase transition in
-    // Werewolf is tied to a tap, so this rarely fires in practice.
+    // Autoplay blocked or file missing — fall through to onEnded so
+    // auto-advance flows don't stall. Mobile Safari blocks audio until
+    // a user gesture; the lobby's "Deal roles" tap counts, so this
+    // rarely fires once the game is under way.
+    once();
   });
 }
 

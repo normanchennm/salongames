@@ -124,17 +124,77 @@ const OneNightWWLocalBoard: React.FC<GameComponentProps> = ({ players, onComplet
       ("voterIndex" in phase ? `-v${phase.voterIndex}` : ""),
   );
 
-  // Narration cues — fire on phase transitions that correspond to
-  // dramatic beats. No-op if MP3 missing (see lib/narrator.ts).
+  // Narration + auto-advance. Narrator-only phases (night-intro, each
+  // role's wake-up beat, info/result screens) auto-transition to the
+  // next phase once the audio cue finishes — no taps between roles,
+  // since eyes-closed players can't tap. A fallback timer also fires
+  // in case the MP3 is missing, muted, or errors. Phases that need
+  // real player input (seer/robber/troublemaker picks, day-intro
+  // discussion, voting) keep their buttons.
   useEffect(() => {
     const k = phase.kind;
-    if (k === "night-intro") playCue(ONENIGHT_CUES.nightIntro);
-    else if (k === "night-werewolves-pass") playCue(ONENIGHT_CUES.nightWerewolves);
-    else if (k === "night-seer-pass") playCue(ONENIGHT_CUES.nightSeer);
-    else if (k === "night-robber-pass") playCue(ONENIGHT_CUES.nightRobber);
-    else if (k === "night-troublemaker-pass") playCue(ONENIGHT_CUES.nightTroublemaker);
-    else if (k === "day-intro") playCue(ONENIGHT_CUES.dayIntro);
-    else if (k === "reveal") {
+    let fallback: ReturnType<typeof setTimeout> | null = null;
+    let cancelled = false;
+
+    // Play a cue; when it ends (or after `fallbackMs`), run `advance`.
+    // Belt-and-suspenders: narration finishing drives the happy path;
+    // the timer handles muted / missing-MP3 / autoplay-blocked cases.
+    const afterCue = (cue: string, advance: () => void, fallbackMs = 8000) => {
+      const go = () => {
+        if (cancelled) return;
+        if (fallback) { clearTimeout(fallback); fallback = null; }
+        advance();
+      };
+      fallback = setTimeout(go, fallbackMs);
+      playCue(cue, { onEnded: go });
+    };
+
+    // Info screen with no cue — hold for `ms`, then advance. Gives the
+    // active role time to read the result before the next wake-up.
+    const hold = (ms: number, advance: () => void) => {
+      fallback = setTimeout(() => { if (!cancelled) advance(); }, ms);
+    };
+
+    if (k === "night-intro") {
+      afterCue(ONENIGHT_CUES.nightIntro, () => setPhase({ kind: "night-werewolves-pass" }));
+    } else if (k === "night-werewolves-pass") {
+      const wwIds = findAllPlayersByStartingRole(state.startingRoles, "werewolf");
+      const next: Phase = wwIds.length === 0
+        ? { kind: "night-seer-pass" }
+        : { kind: "night-werewolves-reveal" };
+      afterCue(ONENIGHT_CUES.nightWerewolves, () => setPhase(next));
+    } else if (k === "night-werewolves-reveal") {
+      // Solo wolves also peek a center card here — give extra read time.
+      hold(7000, () => setPhase({ kind: "night-seer-pass" }));
+    } else if (k === "night-seer-pass") {
+      const seerId = findPlayerIdByStartingRole(state.startingRoles, "seer");
+      const next: Phase = seerId
+        ? { kind: "night-seer-choose" }
+        : { kind: "night-robber-pass" };
+      afterCue(ONENIGHT_CUES.nightSeer, () => setPhase(next));
+    } else if (k === "night-seer-result-player" || k === "night-seer-result-center") {
+      hold(6000, () => setPhase({ kind: "night-robber-pass" }));
+    } else if (k === "night-robber-pass") {
+      const robberId = findPlayerIdByStartingRole(state.startingRoles, "robber");
+      const next: Phase = robberId
+        ? { kind: "night-robber-pick" }
+        : { kind: "night-troublemaker-pass" };
+      afterCue(ONENIGHT_CUES.nightRobber, () => setPhase(next));
+    } else if (k === "night-robber-result") {
+      hold(6000, () => setPhase({ kind: "night-troublemaker-pass" }));
+    } else if (k === "night-troublemaker-pass") {
+      const tmId = findPlayerIdByStartingRole(state.startingRoles, "troublemaker");
+      const next: Phase = tmId
+        ? { kind: "night-troublemaker-pick1" }
+        : { kind: "day-intro" };
+      afterCue(ONENIGHT_CUES.nightTroublemaker, () => setPhase(next));
+    } else if (k === "night-troublemaker-done") {
+      hold(5000, () => setPhase({ kind: "day-intro" }));
+    } else if (k === "day-intro") {
+      // Play the wake-up cue but DON'T auto-advance — players need
+      // however long they need to discuss before tapping "Start voting".
+      playCue(ONENIGHT_CUES.dayIntro);
+    } else if (k === "reveal") {
       const tally: Record<string, number> = {};
       for (const v of Object.values(state.votes)) tally[v] = (tally[v] ?? 0) + 1;
       const max = Math.max(0, ...Object.values(tally));
@@ -144,7 +204,12 @@ const OneNightWWLocalBoard: React.FC<GameComponentProps> = ({ players, onComplet
       const villageWins = wwInPlay === 0 ? killedIds.length === 0 : killedWWs.length > 0;
       playCue(villageWins ? ONENIGHT_CUES.villageWins : ONENIGHT_CUES.werewolvesWin);
     }
-  }, [phase.kind, state.currentRoles, state.votes]);
+
+    return () => {
+      cancelled = true;
+      if (fallback) clearTimeout(fallback);
+    };
+  }, [phase, state.startingRoles, state.currentRoles, state.votes]);
 
   function deal() {
     const roles = rolesFor(players.length);
@@ -278,6 +343,9 @@ const OneNightWWLocalBoard: React.FC<GameComponentProps> = ({ players, onComplet
   }
 
   // --- NIGHT ---------------------------------------------------
+  // All narrator-only phases below auto-advance via the useEffect
+  // above — no buttons. Screens are display-only; the narrator voice
+  // paces the whole night sequence.
   if (phase.kind === "night-intro") {
     return (
       <section className="mx-auto max-w-md animate-fade-up text-center">
@@ -288,38 +356,17 @@ const OneNightWWLocalBoard: React.FC<GameComponentProps> = ({ players, onComplet
           called role opens their eyes, leans in to the phone, makes their
           choice, and closes their eyes again. Nobody passes.
         </p>
-        <button
-          type="button"
-          onClick={() => setPhase({ kind: "night-werewolves-pass" })}
-          className="mt-10 w-full rounded-md bg-[hsl(var(--ember))] py-3 font-mono text-[11px] uppercase tracking-wider text-bg transition-opacity hover:opacity-90"
-        >
-          Werewolves, wake up →
-        </button>
       </section>
     );
   }
   if (phase.kind === "night-werewolves-pass") {
-    const wwIds = findAllPlayersByStartingRole(state.startingRoles, "werewolf");
-    if (wwIds.length === 0) {
-      // No werewolves in play (all 3 in center): skip to seer.
-      setTimeout(() => setPhase({ kind: "night-seer-pass" }), 0);
-      return null;
-    }
     return (
       <section className="mx-auto max-w-md animate-fade-up text-center">
         <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-[hsl(var(--ember))]">Werewolves</p>
         <h2 className="mt-4 font-display text-3xl italic">Open your eyes. Look at each other.</h2>
         <p className="mt-3 text-sm text-muted">
-          Phone stays in the middle. Any werewolf: lean in and tap to see the
-          other wolves on screen. Then close your eyes.
+          Any werewolf: lean in to the phone. The others appear in a moment.
         </p>
-        <button
-          type="button"
-          onClick={() => setPhase({ kind: "night-werewolves-reveal" })}
-          className="mt-10 w-full rounded-md bg-[hsl(var(--ember))] py-3 font-mono text-[11px] uppercase tracking-wider text-bg transition-opacity hover:opacity-90"
-        >
-          Show the wolves →
-        </button>
       </section>
     );
   }
@@ -341,13 +388,9 @@ const OneNightWWLocalBoard: React.FC<GameComponentProps> = ({ players, onComplet
             <p className="mt-1 font-display text-xl italic text-fg">{ROLE_LABEL[state.centerCards[peekIdx]]}</p>
           </div>
         )}
-        <button
-          type="button"
-          onClick={() => setPhase({ kind: "night-seer-pass" })}
-          className="mt-10 w-full rounded-md bg-[hsl(var(--ember))] py-3 font-mono text-[11px] uppercase tracking-wider text-bg transition-opacity hover:opacity-90"
-        >
-          Werewolves, eyes closed → Seer, wake up
-        </button>
+        <p className="mt-6 font-mono text-[10px] uppercase tracking-[0.2em] text-muted/70">
+          close your eyes — narrator will call the next role
+        </p>
       </section>
     );
   }
@@ -355,19 +398,14 @@ const OneNightWWLocalBoard: React.FC<GameComponentProps> = ({ players, onComplet
   // --- SEER ----------------------------------------------------
   if (phase.kind === "night-seer-pass") {
     const seerId = findPlayerIdByStartingRole(state.startingRoles, "seer");
-    if (!seerId) {
-      setTimeout(() => setPhase({ kind: "night-robber-pass" }), 0);
-      return null;
-    }
-    const seer = players.find((p) => p.id === seerId);
+    const seer = seerId ? players.find((p) => p.id === seerId) : null;
     return (
       <section className="mx-auto max-w-md animate-fade-up text-center">
         <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-[hsl(var(--ember))]">Seer</p>
-        <h2 className="mt-4 font-display text-3xl italic">{seer?.name}, open your eyes.</h2>
-        <p className="mt-3 text-sm text-muted">Phone is in the middle — lean in.</p>
-        <button type="button" onClick={() => setPhase({ kind: "night-seer-choose" })} className="mt-10 w-full rounded-md bg-[hsl(var(--ember))] py-3 font-mono text-[11px] uppercase tracking-wider text-bg transition-opacity hover:opacity-90">
-          Begin →
-        </button>
+        <h2 className="mt-4 font-display text-3xl italic">
+          {seer ? `${seer.name}, open your eyes.` : "No Seer in play."}
+        </h2>
+        {seer && <p className="mt-3 text-sm text-muted">Phone is in the middle — lean in.</p>}
       </section>
     );
   }
@@ -415,9 +453,9 @@ const OneNightWWLocalBoard: React.FC<GameComponentProps> = ({ players, onComplet
         <div className="mt-4 rounded-lg border border-[hsl(var(--ember)/0.5)] bg-[hsl(var(--ember)/0.08)] px-5 py-6">
           <p className="font-display text-3xl italic text-[hsl(var(--ember))]">{ROLE_LABEL[phase.role]}</p>
         </div>
-        <button type="button" onClick={() => setPhase({ kind: "night-robber-pass" })} className="mt-10 w-full rounded-md bg-[hsl(var(--ember))] py-3 font-mono text-[11px] uppercase tracking-wider text-bg transition-opacity hover:opacity-90">
-          Seer, eyes closed → Robber, wake up
-        </button>
+        <p className="mt-6 font-mono text-[10px] uppercase tracking-[0.2em] text-muted/70">
+          close your eyes — narrator will call the next role
+        </p>
       </section>
     );
   }
@@ -445,9 +483,9 @@ const OneNightWWLocalBoard: React.FC<GameComponentProps> = ({ players, onComplet
             </div>
           ))}
         </div>
-        <button type="button" onClick={() => setPhase({ kind: "night-robber-pass" })} className="mt-10 w-full rounded-md bg-[hsl(var(--ember))] py-3 font-mono text-[11px] uppercase tracking-wider text-bg transition-opacity hover:opacity-90">
-          Seer, eyes closed → Robber, wake up
-        </button>
+        <p className="mt-6 font-mono text-[10px] uppercase tracking-[0.2em] text-muted/70">
+          close your eyes — narrator will call the next role
+        </p>
       </section>
     );
   }
@@ -455,19 +493,14 @@ const OneNightWWLocalBoard: React.FC<GameComponentProps> = ({ players, onComplet
   // --- ROBBER --------------------------------------------------
   if (phase.kind === "night-robber-pass") {
     const robberId = findPlayerIdByStartingRole(state.startingRoles, "robber");
-    if (!robberId) {
-      setTimeout(() => setPhase({ kind: "night-troublemaker-pass" }), 0);
-      return null;
-    }
-    const robber = players.find((p) => p.id === robberId);
+    const robber = robberId ? players.find((p) => p.id === robberId) : null;
     return (
       <section className="mx-auto max-w-md animate-fade-up text-center">
         <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-[hsl(var(--ember))]">Robber</p>
-        <h2 className="mt-4 font-display text-3xl italic">{robber?.name}, open your eyes.</h2>
-        <p className="mt-3 text-sm text-muted">Phone is in the middle — lean in.</p>
-        <button type="button" onClick={() => setPhase({ kind: "night-robber-pick" })} className="mt-10 w-full rounded-md bg-[hsl(var(--ember))] py-3 font-mono text-[11px] uppercase tracking-wider text-bg transition-opacity hover:opacity-90">
-          Begin →
-        </button>
+        <h2 className="mt-4 font-display text-3xl italic">
+          {robber ? `${robber.name}, open your eyes.` : "No Robber in play."}
+        </h2>
+        {robber && <p className="mt-3 text-sm text-muted">Phone is in the middle — lean in.</p>}
       </section>
     );
   }
@@ -510,9 +543,9 @@ const OneNightWWLocalBoard: React.FC<GameComponentProps> = ({ players, onComplet
           <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted">You are now</p>
           <p className="mt-1 font-display text-3xl italic text-[hsl(var(--ember))]">{ROLE_LABEL[phase.newRole]}</p>
         </div>
-        <button type="button" onClick={() => setPhase({ kind: "night-troublemaker-pass" })} className="mt-10 w-full rounded-md bg-[hsl(var(--ember))] py-3 font-mono text-[11px] uppercase tracking-wider text-bg transition-opacity hover:opacity-90">
-          Robber, eyes closed → Troublemaker, wake up
-        </button>
+        <p className="mt-6 font-mono text-[10px] uppercase tracking-[0.2em] text-muted/70">
+          close your eyes — narrator will call the next role
+        </p>
       </section>
     );
   }
@@ -520,19 +553,14 @@ const OneNightWWLocalBoard: React.FC<GameComponentProps> = ({ players, onComplet
   // --- TROUBLEMAKER --------------------------------------------
   if (phase.kind === "night-troublemaker-pass") {
     const tmId = findPlayerIdByStartingRole(state.startingRoles, "troublemaker");
-    if (!tmId) {
-      setTimeout(() => setPhase({ kind: "day-intro" }), 0);
-      return null;
-    }
-    const tm = players.find((p) => p.id === tmId);
+    const tm = tmId ? players.find((p) => p.id === tmId) : null;
     return (
       <section className="mx-auto max-w-md animate-fade-up text-center">
         <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-[hsl(var(--ember))]">Troublemaker</p>
-        <h2 className="mt-4 font-display text-3xl italic">{tm?.name}, open your eyes.</h2>
-        <p className="mt-3 text-sm text-muted">Phone is in the middle — lean in.</p>
-        <button type="button" onClick={() => setPhase({ kind: "night-troublemaker-pick1" })} className="mt-10 w-full rounded-md bg-[hsl(var(--ember))] py-3 font-mono text-[11px] uppercase tracking-wider text-bg transition-opacity hover:opacity-90">
-          Begin →
-        </button>
+        <h2 className="mt-4 font-display text-3xl italic">
+          {tm ? `${tm.name}, open your eyes.` : "No Troublemaker in play."}
+        </h2>
+        {tm && <p className="mt-3 text-sm text-muted">Phone is in the middle — lean in.</p>}
       </section>
     );
   }
@@ -595,9 +623,9 @@ const OneNightWWLocalBoard: React.FC<GameComponentProps> = ({ players, onComplet
         <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-muted">Swapped</p>
         <h2 className="mt-4 font-display text-2xl italic">{a?.name} and {b?.name}.</h2>
         <p className="mt-3 text-xs text-muted">You don&apos;t see their cards. They don&apos;t know they were swapped.</p>
-        <button type="button" onClick={() => setPhase({ kind: "day-intro" })} className="mt-10 w-full rounded-md bg-[hsl(var(--ember))] py-3 font-mono text-[11px] uppercase tracking-wider text-bg transition-opacity hover:opacity-90">
-          Troublemaker, eyes closed →
-        </button>
+        <p className="mt-6 font-mono text-[10px] uppercase tracking-[0.2em] text-muted/70">
+          close your eyes — morning is coming
+        </p>
       </section>
     );
   }
