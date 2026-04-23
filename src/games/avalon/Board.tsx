@@ -7,6 +7,7 @@ import { ROLES, TEAM_SIZES, buildRoleMix, failsNeeded, shuffle, type RoleId } fr
 import { RoleArt } from "@/components/RoleArt";
 import { EndScreenArt } from "@/components/EndScreenArt";
 import { playCue, AVALON_CUES } from "@/lib/narrator";
+import { AvalonRemoteBoard } from "./RemoteBoard";
 
 /** Avalon-clone ("Knights of Camelot") — 5-10 players, quest-based
  *  social deduction.
@@ -39,7 +40,12 @@ type Phase =
   | { kind: "assassin-guess"; questResults: ("success" | "fail")[] }
   | { kind: "end"; winner: "good" | "evil"; reason: string };
 
-export const AvalonBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
+export const AvalonBoard: React.FC<GameComponentProps> = (props) => {
+  if (props.remote) return <AvalonRemoteBoard {...props} remote={props.remote} />;
+  return <AvalonLocalBoard {...props} />;
+};
+
+const AvalonLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
   const startedAt = useMemo(() => Date.now(), []);
   const n = players.length;
   const assigned = useMemo<PlayerState[]>(() => {

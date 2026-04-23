@@ -28,6 +28,7 @@ const POPULAR_IDS: string[] = [
   "mafia",           // classic variant, narration-led
   "codenames",       // crowd-pleaser, scales 4-10
   "avalon",          // deeper social deduction after people like Werewolf
+  "sh",              // Secret Chancellor — fascist/liberal hidden roles
   "escaperoom",      // our unique-to-this-app moment
   "fibbage",         // party hit with immediate feedback
   "badanswers",      // Cards Against Humans — fill-the-blank judge

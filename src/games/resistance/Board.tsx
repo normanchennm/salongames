@@ -6,6 +6,7 @@ import { useScrollToTop } from "@/lib/useScrollToTop";
 import { RoleArt } from "@/components/RoleArt";
 import { EndScreenArt } from "@/components/EndScreenArt";
 import { playCue, RESISTANCE_CUES } from "@/lib/narrator";
+import { ResistanceRemoteBoard } from "./RemoteBoard";
 
 /** The Resistance — 5-10 player hidden-team mission game.
  *
@@ -60,7 +61,12 @@ function assignRoles(players: { id: string }[]): Roles {
   return roles;
 }
 
-export const ResistanceBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
+export const ResistanceBoard: React.FC<GameComponentProps> = (props) => {
+  if (props.remote) return <ResistanceRemoteBoard {...props} remote={props.remote} />;
+  return <ResistanceLocalBoard {...props} />;
+};
+
+const ResistanceLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
   const startedAt = useMemo(() => Date.now(), []);
   const [phase, setPhase] = useState<Phase>({ kind: "intro" });
   const [roles, setRoles] = useState<Roles>({});

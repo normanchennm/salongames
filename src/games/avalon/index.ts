@@ -12,8 +12,9 @@ const avalon: Game = {
   tier: "free",
   coverGradient: ["#4a2d5f", "#100d0b"],
   description:
-    "Loyal knights vs. hidden minions of evil. Pick teams for five quests, vote on them, play secret success or fail cards. Merlin knows who's evil — but if Good wins three quests, the Assassin gets one shot to name Merlin and steal the win. 5-10 players, classic Avalon mechanics.",
+    "Loyal knights vs. hidden minions of evil. Pick teams for five quests, vote on them, play secret success or fail cards. Merlin knows who's evil — but if Good wins three quests, the Assassin gets one shot to name Merlin and steal the win. 5-10 players, classic Avalon mechanics. In Remote mode, roles and Merlin's intel stay private on each device.",
   Component: AvalonBoard,
+  supportsRemote: true,
 };
 
 export default avalon;
