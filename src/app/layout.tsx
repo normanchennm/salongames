@@ -22,7 +22,7 @@ const geistMono = Geist_Mono({
   display: "swap",
 });
 
-const SITE_URL = "https://www.salongames.live";
+const SITE_URL = "https://salongames.me";
 const OG_TITLE = "salongames — pass-and-play party games";
 const OG_DESCRIPTION =
   "A library of pass-and-play party games for friends gathered in person. Werewolf, Mafia, Spyfall, Charades, Trivia and more — on one device, no accounts, no servers.";
