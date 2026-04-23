@@ -13,6 +13,7 @@ import { tpRemoteInitialState, tpRemoteReducer } from "./telephonepic/remote";
 import { cnRemoteInitialState, cnRemoteReducer } from "./codenames/remote";
 import { baRemoteInitialState, baRemoteReducer } from "./badanswers/remote";
 import { bsRemoteInitialState, bsRemoteReducer } from "./battleship/remote";
+import { wwRemoteInitialState, wwRemoteReducerExtended } from "./werewolf/remote";
 
 export const REMOTE_CONFIGS: Record<string, RemoteGameConfig> = {
   fibbage: { initialState: fibRemoteInitialState, reducer: fibRemoteReducer as RemoteGameConfig["reducer"] },
@@ -20,6 +21,7 @@ export const REMOTE_CONFIGS: Record<string, RemoteGameConfig> = {
   codenames: { initialState: cnRemoteInitialState, reducer: cnRemoteReducer as RemoteGameConfig["reducer"] },
   badanswers: { initialState: baRemoteInitialState, reducer: baRemoteReducer as RemoteGameConfig["reducer"] },
   battleship: { initialState: bsRemoteInitialState, reducer: bsRemoteReducer as RemoteGameConfig["reducer"] },
+  werewolf: { initialState: wwRemoteInitialState, reducer: wwRemoteReducerExtended as RemoteGameConfig["reducer"] },
 };
 
 export function getRemoteConfig(gameId: string): RemoteGameConfig | undefined {

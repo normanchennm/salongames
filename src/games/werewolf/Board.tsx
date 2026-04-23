@@ -6,6 +6,7 @@ import { playCue, WEREWOLF_CUES } from "@/lib/narrator";
 import { useScrollToTop } from "@/lib/useScrollToTop";
 import { ROLES, defaultRoleMix, shuffle, type RoleId } from "./roles";
 import { RoleArt } from "@/components/RoleArt";
+import { WerewolfRemoteBoard } from "./RemoteBoard";
 
 /** Werewolf pass-and-play MVP. Covers the full loop:
  *  lobby → secret role reveal → night phase → day discussion →
@@ -37,7 +38,12 @@ interface PlayerState {
   doctorSelfProtectUsed?: boolean;
 }
 
-export const WerewolfBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
+export const WerewolfBoard: React.FC<GameComponentProps> = (props) => {
+  if (props.remote) return <WerewolfRemoteBoard {...props} remote={props.remote} />;
+  return <WerewolfLocalBoard {...props} />;
+};
+
+const WerewolfLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
   const startedAt = useMemo(() => Date.now(), []);
   const [state, setState] = useState(() => initialState(players));
   const alive = state.players.filter((p) => p.alive);
