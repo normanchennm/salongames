@@ -12,8 +12,9 @@ const codenames: Game = {
   tier: "free",
   coverGradient: ["#2a2a3a", "#100d0b"],
   description:
-    "Two teams, each with a spymaster. 25 words on a shared grid, secretly colored. The spymaster sees the grid and calls out a one-word clue plus a number; teammates tap cards trying to match their team's color. Wrong color ends the turn; the black Assassin ends the game. First team to reveal all its words wins.",
+    "Two teams, each with a spymaster. 25 words on a shared grid, secretly colored. The spymaster sees the grid and calls out a one-word clue plus a number; teammates tap cards trying to match their team's color. Wrong color ends the turn; the black Assassin ends the game. First team to reveal all its words wins. In Remote mode, spymasters see the colored grid on their own device — no more pass-the-phone.",
   Component: CodenamesBoard,
+  supportsRemote: true,
 };
 
 export default codenames;

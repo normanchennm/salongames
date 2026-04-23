@@ -5,6 +5,7 @@ import type { GameComponentProps, Player } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
 import { CODENAMES_WORDS } from "./words";
 import { playCue, CODENAMES_CUES } from "@/lib/narrator";
+import { CodenamesRemoteBoard } from "./RemoteBoard";
 
 /** Codenames — partnership word deduction on a 5x5 grid.
  *
@@ -60,7 +61,12 @@ function countRemaining(cards: Card[], color: Color): number {
   return cards.filter((c) => c.color === color && !c.revealed).length;
 }
 
-export const CodenamesBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
+export const CodenamesBoard: React.FC<GameComponentProps> = (props) => {
+  if (props.remote) return <CodenamesRemoteBoard {...props} remote={props.remote} />;
+  return <CodenamesLocalBoard {...props} />;
+};
+
+const CodenamesLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
   const startedAt = useMemo(() => Date.now(), []);
   const [phase, setPhase] = useState<Phase>({ kind: "roster" });
   useScrollToTop(phase.kind + ("team" in phase ? `-${phase.team}` : ""));

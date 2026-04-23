@@ -9,9 +9,13 @@
 
 import type { RemoteGameConfig } from "./types";
 import { fibRemoteInitialState, fibRemoteReducer } from "./fibbage/remote";
+import { tpRemoteInitialState, tpRemoteReducer } from "./telephonepic/remote";
+import { cnRemoteInitialState, cnRemoteReducer } from "./codenames/remote";
 
 export const REMOTE_CONFIGS: Record<string, RemoteGameConfig> = {
   fibbage: { initialState: fibRemoteInitialState, reducer: fibRemoteReducer as RemoteGameConfig["reducer"] },
+  telephonepic: { initialState: tpRemoteInitialState, reducer: tpRemoteReducer as RemoteGameConfig["reducer"] },
+  codenames: { initialState: cnRemoteInitialState, reducer: cnRemoteReducer as RemoteGameConfig["reducer"] },
 };
 
 export function getRemoteConfig(gameId: string): RemoteGameConfig | undefined {

@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
 import { DrawingCanvas } from "./DrawingCanvas";
+import { TelephonePicRemoteBoard } from "./RemoteBoard";
 
 /** Telephone Pictionary — one-device sequential chain.
  *
@@ -42,7 +43,12 @@ type Phase =
   | { kind: "reveal"; steps: ChainStep[]; cursor: number }
   | { kind: "end"; steps: ChainStep[] };
 
-export const TelephonePicBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
+export const TelephonePicBoard: React.FC<GameComponentProps> = (props) => {
+  if (props.remote) return <TelephonePicRemoteBoard {...props} remote={props.remote} />;
+  return <TelephonePicLocalBoard {...props} />;
+};
+
+const TelephonePicLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
   const startedAt = useMemo(() => Date.now(), []);
   // 2 steps per player so everyone does both caption + drawing.
   const totalSteps = players.length * 2;
