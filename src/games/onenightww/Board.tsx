@@ -6,6 +6,7 @@ import { useScrollToTop } from "@/lib/useScrollToTop";
 import { RoleArt } from "@/components/RoleArt";
 import { EndScreenArt } from "@/components/EndScreenArt";
 import { playCue, ONENIGHT_CUES } from "@/lib/narrator";
+import { OneNightWWRemoteBoard } from "./RemoteBoard";
 
 /** One Night Ultimate Werewolf — single-night, no elimination until
  *  the vote at the end. Pass-and-play on a shared phone.
@@ -102,7 +103,12 @@ function findAllPlayersByStartingRole(startingRoles: Record<string, Role>, role:
   return Object.entries(startingRoles).filter(([, r]) => r === role).map(([id]) => id);
 }
 
-export const OneNightWWBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
+export const OneNightWWBoard: React.FC<GameComponentProps> = (props) => {
+  if (props.remote) return <OneNightWWRemoteBoard {...props} remote={props.remote} />;
+  return <OneNightWWLocalBoard {...props} />;
+};
+
+const OneNightWWLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
   const startedAt = useMemo(() => Date.now(), []);
   const [phase, setPhase] = useState<Phase>({ kind: "intro" });
   const [state, setState] = useState<GameState>(() => ({
