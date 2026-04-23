@@ -150,31 +150,74 @@ function peerIdFor(): string {
 
 function now() { return Date.now(); }
 
-// WebRTC ICE servers. Google + Cloudflare public STUN for hole-
-// punching. No TURN by default: openrelay.metered.ca (historical free
-// public TURN) was sunsetted — all ports stall now, which actively
-// slowed ICE gathering when included. Cross-network (symmetric NAT)
-// needs a real TURN server; plan is to wire Metered.ca's free tier
-// behind an env-configurable key when we set one up.
-const ICE_SERVERS: RTCIceServer[] = [
+// Static STUN servers. Handle direct peer-to-peer via hole-punching
+// on most NATs. Symmetric NAT / some cellular carriers can't be
+// traversed by STUN alone — see cachedTurnServers below.
+const STATIC_ICE_SERVERS: RTCIceServer[] = [
   { urls: "stun:stun.l.google.com:19302" },
   { urls: "stun:stun1.l.google.com:19302" },
   { urls: "stun:stun.cloudflare.com:3478" },
 ];
 
-// Self-hosted PeerJS signaling broker on Azure App Service. Replaces
-// peerjs.com (public broker's WebSocket upgrade started returning
-// ERR_SSL_VERSION_OR_CIPHER_MISMATCH in Chromium, which silently
-// broke every room). Same protocol, just our host/key.
-const PEER_OPTS = {
-  debug: 2,
-  host: "salongames-peer-b1.azurewebsites.net",
-  port: 443,
-  path: "/peerjs",
-  secure: true,
-  key: "salongames",
-  config: { iceServers: ICE_SERVERS },
-};
+const SIGNAL_HOST = "salongames-peer-b1.azurewebsites.net";
+const TURN_CACHE_KEY = "salongames:turn:v1";
+
+// Cloudflare TURN creds, fetched via our peerjs-server's /turn-
+// credentials endpoint (which proxies Cloudflare with our server-side
+// API token — the token never leaves Azure). Cached for 5h in
+// localStorage to avoid refetching on every room open (Cloudflare
+// issues 6h TTL creds; we refresh an hour before expiry).
+interface CachedTurn { iceServers: RTCIceServer[]; expiresAt: number; }
+let cachedTurnServers: RTCIceServer[] = [];
+
+function loadCachedTurn(): void {
+  if (typeof window === "undefined") return;
+  try {
+    const raw = window.localStorage.getItem(TURN_CACHE_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw) as CachedTurn;
+    if (Date.now() < parsed.expiresAt && Array.isArray(parsed.iceServers)) {
+      cachedTurnServers = parsed.iceServers;
+    }
+  } catch { /* ignore */ }
+}
+
+async function refreshTurnServers(): Promise<void> {
+  if (typeof window === "undefined") return;
+  try {
+    const res = await fetch(`https://${SIGNAL_HOST}/turn-credentials`);
+    if (!res.ok) return;
+    const data = await res.json() as { iceServers?: RTCIceServer[] };
+    if (!Array.isArray(data.iceServers) || data.iceServers.length === 0) return;
+    cachedTurnServers = data.iceServers;
+    window.localStorage.setItem(TURN_CACHE_KEY, JSON.stringify({
+      iceServers: data.iceServers,
+      // Cloudflare gives 6h TTL; expire cache 1h early so the next
+      // refresh never races expiry.
+      expiresAt: Date.now() + 5 * 60 * 60 * 1000,
+    } satisfies CachedTurn));
+  } catch { /* TURN is optional — STUN handles most cases */ }
+}
+
+// Hydrate from cache on import, then refresh in the background so the
+// next room open has fresh creds. First-time visitors get STUN-only on
+// their first room attempt (no blocking wait); any retry uses TURN.
+if (typeof window !== "undefined") {
+  loadCachedTurn();
+  void refreshTurnServers();
+}
+
+function peerOpts() {
+  return {
+    debug: 2,
+    host: SIGNAL_HOST,
+    port: 443,
+    path: "/peerjs",
+    secure: true,
+    key: "salongames",
+    config: { iceServers: [...STATIC_ICE_SERVERS, ...cachedTurnServers] },
+  };
+}
 
 interface Persisted {
   code: string;
@@ -235,7 +278,7 @@ class Host<S, A> implements RoomHandle<S, A> {
       },
     ];
     this.snapshot = this.buildSnapshot("connecting");
-    this.peer = new Peer(myId, PEER_OPTS);
+    this.peer = new Peer(myId, peerOpts());
     this.peer.on("open", () => {
       persist({ code, gameId: opts.gameId, peerId: myId, playerName: opts.playerName, isHost: true, savedAt: now() });
       this.snapshot = this.buildSnapshot("ready");
@@ -418,7 +461,7 @@ class Joiner<S, A> implements RoomHandle<S, A> {
       state: null,
       status: "connecting",
     };
-    this.peer = new Peer(this.myPeerId, PEER_OPTS);
+    this.peer = new Peer(this.myPeerId, peerOpts());
     this.peer.on("open", () => {
       persist({ code, gameId, peerId: this.myPeerId, playerName, isHost: false, savedAt: now() });
       this.connectToHost();
@@ -429,7 +472,7 @@ class Joiner<S, A> implements RoomHandle<S, A> {
       if (e.type === "unavailable-id") {
         this.myPeerId = peerIdFor();
         this.peer.destroy();
-        this.peer = new Peer(this.myPeerId, PEER_OPTS);
+        this.peer = new Peer(this.myPeerId, peerOpts());
         this.peer.on("open", () => this.connectToHost());
         return;
       }
