@@ -7,6 +7,7 @@ import { RoleArt } from "@/components/RoleArt";
 import { EndScreenArt } from "@/components/EndScreenArt";
 import { playCue, INSIDER_CUES } from "@/lib/narrator";
 import { WORDS } from "./words";
+import { InsiderRemoteBoard } from "./RemoteBoard";
 
 /** Insider — pass-and-play deduction.
  *
@@ -67,7 +68,12 @@ function pickWord(): string {
   return WORDS[Math.floor(Math.random() * WORDS.length)];
 }
 
-export const InsiderBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
+export const InsiderBoard: React.FC<GameComponentProps> = (props) => {
+  if (props.remote) return <InsiderRemoteBoard {...props} remote={props.remote} />;
+  return <InsiderLocalBoard {...props} />;
+};
+
+const InsiderLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
   const startedAt = useMemo(() => Date.now(), []);
   const [phase, setPhase] = useState<Phase>({ kind: "intro" });
 

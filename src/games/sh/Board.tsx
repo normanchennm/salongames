@@ -6,6 +6,7 @@ import { useScrollToTop } from "@/lib/useScrollToTop";
 import { RoleArt } from "@/components/RoleArt";
 import { EndScreenArt } from "@/components/EndScreenArt";
 import { playCue, SH_CUES } from "@/lib/narrator";
+import { SecretHitlerRemoteBoard } from "./RemoteBoard";
 
 /** Secret Hitler (simplified MVP). 5-10p hidden-team policy game.
  *
@@ -62,7 +63,12 @@ type Phase =
   | { kind: "enact-reveal"; board: Board; presidentIdx: number; chancellorIdx: number; deck: Policy[]; discard: Policy[]; enacted: Policy; lastChancellor: string | null }
   | { kind: "end"; winner: "liberal" | "fascist"; reason: string; board: Board; roles: Roles };
 
-export const SecretHitlerBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
+export const SecretHitlerBoard: React.FC<GameComponentProps> = (props) => {
+  if (props.remote) return <SecretHitlerRemoteBoard {...props} remote={props.remote} />;
+  return <SecretHitlerLocalBoard {...props} />;
+};
+
+const SecretHitlerLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
   const startedAt = useMemo(() => Date.now(), []);
   const [phase, setPhase] = useState<Phase>({ kind: "intro" });
   const [roles, setRoles] = useState<Roles>({});

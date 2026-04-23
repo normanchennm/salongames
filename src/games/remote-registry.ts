@@ -17,6 +17,8 @@ import { wwRemoteInitialState, wwRemoteReducerExtended } from "./werewolf/remote
 import { mafiaRemoteInitialState, mafiaRemoteReducer } from "./mafia/remote";
 import { resistanceRemoteInitialState, resistanceRemoteReducer } from "./resistance/remote";
 import { avalonRemoteInitialState, avalonRemoteReducer } from "./avalon/remote";
+import { shRemoteInitialState, shRemoteReducer } from "./sh/remote";
+import { insiderRemoteInitialState, insiderRemoteReducer } from "./insider/remote";
 
 export const REMOTE_CONFIGS: Record<string, RemoteGameConfig> = {
   fibbage: { initialState: fibRemoteInitialState, reducer: fibRemoteReducer as RemoteGameConfig["reducer"] },
@@ -28,6 +30,8 @@ export const REMOTE_CONFIGS: Record<string, RemoteGameConfig> = {
   mafia: { initialState: mafiaRemoteInitialState, reducer: mafiaRemoteReducer as RemoteGameConfig["reducer"] },
   resistance: { initialState: resistanceRemoteInitialState, reducer: resistanceRemoteReducer as RemoteGameConfig["reducer"] },
   avalon: { initialState: avalonRemoteInitialState, reducer: avalonRemoteReducer as RemoteGameConfig["reducer"] },
+  sh: { initialState: shRemoteInitialState, reducer: shRemoteReducer as RemoteGameConfig["reducer"] },
+  insider: { initialState: insiderRemoteInitialState, reducer: insiderRemoteReducer as RemoteGameConfig["reducer"] },
 };
 
 export function getRemoteConfig(gameId: string): RemoteGameConfig | undefined {
