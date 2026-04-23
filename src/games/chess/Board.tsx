@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
+import { ChessRemoteBoard } from "./RemoteBoard";
 
 /** Chess — full-rule implementation.
  *
@@ -256,7 +257,12 @@ const PIECE_SYMBOLS: Record<string, string> = {
   "bP": "♟", "bR": "♜", "bN": "♞", "bB": "♝", "bQ": "♛", "bK": "♚",
 };
 
-export const ChessBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
+export const ChessBoard: React.FC<GameComponentProps> = (props) => {
+  if (props.remote) return <ChessRemoteBoard {...props} remote={props.remote} />;
+  return <ChessLocalBoard {...props} />;
+};
+
+const ChessLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
   const startedAt = useMemo(() => Date.now(), []);
   const [state, setState] = useState<State>(() => ({ grid: startGrid(), turn: "w", enPassant: null }));
   const [selected, setSelected] = useState<[number, number] | null>(null);

@@ -14,6 +14,7 @@ const backgammon: Game = {
   description:
     "Standard 24-point starting position, 15 checkers each. Roll two dice, move two checkers (or one checker twice); doubles give four moves. Hit a lone opponent to send them to the bar — re-entry required before anything else. All home-board checkers in means you may bear off. First to bear off 15 wins. Doubling cube and match play deferred.",
   Component: BackgammonBoard,
+  supportsRemote: true,
 };
 
 export default backgammon;

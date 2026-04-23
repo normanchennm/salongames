@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
+import { GoRemoteBoard } from "./RemoteBoard";
 
 /** Go 9×9 — 2 players, area scoring.
  *
@@ -118,7 +119,12 @@ type Phase =
   | { kind: "playing"; turn: Color; passes: number }
   | { kind: "end" };
 
-export const GoBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
+export const GoBoard: React.FC<GameComponentProps> = (props) => {
+  if (props.remote) return <GoRemoteBoard {...props} remote={props.remote} />;
+  return <GoLocalBoard {...props} />;
+};
+
+const GoLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
   const startedAt = useMemo(() => Date.now(), []);
   const [grid, setGrid] = useState<Grid>(() => emptyGrid());
   const [phase, setPhase] = useState<Phase>({ kind: "playing", turn: "B", passes: 0 });

@@ -1,0 +1,310 @@
+/** Chess remote state machine. Full-rule implementation (castling,
+ *  en passant, auto-queen promotion, check / checkmate / stalemate). */
+
+export type PieceType = "P" | "R" | "N" | "B" | "Q" | "K";
+export type Color = "w" | "b";
+export interface Piece { color: Color; type: PieceType; hasMoved?: boolean }
+export type Grid = (Piece | null)[][];
+
+export interface ChessCore {
+  grid: Grid;
+  turn: Color;
+  enPassant: [number, number] | null;
+}
+
+export type ChessRemoteState = {
+  kind: "playing" | "end";
+  core: ChessCore;
+  playerOrder: string[]; // [white, black]
+  winner: "w" | "b" | "draw" | null;
+  reason: "checkmate" | "stalemate" | null;
+};
+
+export type ChessRemoteAction =
+  | { type: "move"; from: [number, number]; to: [number, number] }
+  | { type: "rematch" };
+
+interface MinimalPlayer {
+  peerId: string;
+  name: string;
+  isHost: boolean;
+  online: boolean;
+}
+
+function inBounds(r: number, c: number): boolean {
+  return r >= 0 && r < 8 && c >= 0 && c < 8;
+}
+
+function startGrid(): Grid {
+  const g: Grid = Array.from({ length: 8 }, () => Array<Piece | null>(8).fill(null));
+  const back: PieceType[] = ["R", "N", "B", "Q", "K", "B", "N", "R"];
+  for (let c = 0; c < 8; c++) {
+    g[0][c] = { color: "b", type: back[c] };
+    g[1][c] = { color: "b", type: "P" };
+    g[6][c] = { color: "w", type: "P" };
+    g[7][c] = { color: "w", type: back[c] };
+  }
+  return g;
+}
+
+function attackMoves(core: ChessCore, r: number, c: number): Array<[number, number]> {
+  const p = core.grid[r][c];
+  if (!p) return [];
+  const moves: Array<[number, number]> = [];
+  const add = (nr: number, nc: number): boolean => {
+    if (!inBounds(nr, nc)) return false;
+    const t = core.grid[nr][nc];
+    if (!t) { moves.push([nr, nc]); return true; }
+    if (t.color !== p.color) moves.push([nr, nc]);
+    return false;
+  };
+  const slide = (drs: Array<[number, number]>) => {
+    for (const [dr, dc] of drs) {
+      let nr = r + dr, nc = c + dc;
+      while (inBounds(nr, nc)) {
+        const t = core.grid[nr][nc];
+        if (!t) moves.push([nr, nc]);
+        else { if (t.color !== p.color) moves.push([nr, nc]); break; }
+        nr += dr; nc += dc;
+      }
+    }
+  };
+  switch (p.type) {
+    case "P": {
+      const dir = p.color === "w" ? -1 : 1;
+      for (const dc of [-1, 1]) if (inBounds(r + dir, c + dc)) moves.push([r + dir, c + dc]);
+      break;
+    }
+    case "R": slide([[-1, 0], [1, 0], [0, -1], [0, 1]]); break;
+    case "B": slide([[-1, -1], [-1, 1], [1, -1], [1, 1]]); break;
+    case "Q": slide([[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [-1, 1], [1, -1], [1, 1]]); break;
+    case "N": {
+      const jumps: Array<[number, number]> = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+      for (const [dr, dc] of jumps) add(r + dr, c + dc);
+      break;
+    }
+    case "K": {
+      for (let dr = -1; dr <= 1; dr++)
+        for (let dc = -1; dc <= 1; dc++)
+          if (dr || dc) add(r + dr, c + dc);
+      break;
+    }
+  }
+  return moves;
+}
+
+function isSquareAttacked(core: ChessCore, r: number, c: number, byColor: Color): boolean {
+  for (let sr = 0; sr < 8; sr++) {
+    for (let sc = 0; sc < 8; sc++) {
+      const p = core.grid[sr][sc];
+      if (!p || p.color !== byColor) continue;
+      const moves = attackMoves(core, sr, sc);
+      if (moves.some(([mr, mc]) => mr === r && mc === c)) return true;
+    }
+  }
+  return false;
+}
+
+function pseudoMoves(core: ChessCore, r: number, c: number): Array<[number, number]> {
+  const p = core.grid[r][c];
+  if (!p) return [];
+  const moves: Array<[number, number]> = [];
+  const add = (nr: number, nc: number): boolean => {
+    if (!inBounds(nr, nc)) return false;
+    const t = core.grid[nr][nc];
+    if (!t) { moves.push([nr, nc]); return true; }
+    if (t.color !== p.color) moves.push([nr, nc]);
+    return false;
+  };
+  const slide = (drs: Array<[number, number]>) => {
+    for (const [dr, dc] of drs) {
+      let nr = r + dr, nc = c + dc;
+      while (inBounds(nr, nc)) {
+        const t = core.grid[nr][nc];
+        if (!t) moves.push([nr, nc]);
+        else { if (t.color !== p.color) moves.push([nr, nc]); break; }
+        nr += dr; nc += dc;
+      }
+    }
+  };
+  switch (p.type) {
+    case "P": {
+      const dir = p.color === "w" ? -1 : 1;
+      const startRow = p.color === "w" ? 6 : 1;
+      if (inBounds(r + dir, c) && !core.grid[r + dir][c]) {
+        moves.push([r + dir, c]);
+        if (r === startRow && !core.grid[r + 2 * dir][c]) moves.push([r + 2 * dir, c]);
+      }
+      for (const dc of [-1, 1]) {
+        const nr = r + dir, nc = c + dc;
+        if (!inBounds(nr, nc)) continue;
+        const t = core.grid[nr][nc];
+        if (t && t.color !== p.color) moves.push([nr, nc]);
+        if (core.enPassant && core.enPassant[0] === nr && core.enPassant[1] === nc) moves.push([nr, nc]);
+      }
+      break;
+    }
+    case "R": slide([[-1, 0], [1, 0], [0, -1], [0, 1]]); break;
+    case "B": slide([[-1, -1], [-1, 1], [1, -1], [1, 1]]); break;
+    case "Q": slide([[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [-1, 1], [1, -1], [1, 1]]); break;
+    case "N": {
+      const jumps: Array<[number, number]> = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+      for (const [dr, dc] of jumps) add(r + dr, c + dc);
+      break;
+    }
+    case "K": {
+      for (let dr = -1; dr <= 1; dr++)
+        for (let dc = -1; dc <= 1; dc++)
+          if (dr || dc) add(r + dr, c + dc);
+      if (!p.hasMoved) {
+        const rank = p.color === "w" ? 7 : 0;
+        const opp: Color = p.color === "w" ? "b" : "w";
+        const rookK = core.grid[rank][7];
+        if (rookK && rookK.type === "R" && rookK.color === p.color && !rookK.hasMoved
+            && !core.grid[rank][5] && !core.grid[rank][6]) {
+          if (!isSquareAttacked(core, rank, 4, opp) && !isSquareAttacked(core, rank, 5, opp) && !isSquareAttacked(core, rank, 6, opp)) {
+            moves.push([rank, 6]);
+          }
+        }
+        const rookQ = core.grid[rank][0];
+        if (rookQ && rookQ.type === "R" && rookQ.color === p.color && !rookQ.hasMoved
+            && !core.grid[rank][1] && !core.grid[rank][2] && !core.grid[rank][3]) {
+          if (!isSquareAttacked(core, rank, 4, opp) && !isSquareAttacked(core, rank, 3, opp) && !isSquareAttacked(core, rank, 2, opp)) {
+            moves.push([rank, 2]);
+          }
+        }
+      }
+      break;
+    }
+  }
+  return moves;
+}
+
+function applyChessMove(core: ChessCore, from: [number, number], to: [number, number]): ChessCore {
+  const next: ChessCore = {
+    grid: core.grid.map((row) => row.slice()),
+    turn: core.turn === "w" ? "b" : "w",
+    enPassant: null,
+  };
+  const [fr, fc] = from, [tr, tc] = to;
+  const piece = next.grid[fr][fc];
+  if (!piece) return next;
+  const moved: Piece = { ...piece, hasMoved: true };
+  next.grid[fr][fc] = null;
+
+  if (piece.type === "P" && core.enPassant && tr === core.enPassant[0] && tc === core.enPassant[1] && fc !== tc) {
+    next.grid[fr][tc] = null;
+  }
+  if (piece.type === "P" && Math.abs(tr - fr) === 2) {
+    next.enPassant = [(fr + tr) / 2, fc];
+  }
+  if (piece.type === "P" && (tr === 0 || tr === 7)) {
+    moved.type = "Q";
+  }
+  if (piece.type === "K" && Math.abs(tc - fc) === 2) {
+    if (tc === 6) {
+      const rook = next.grid[fr][7];
+      next.grid[fr][7] = null;
+      next.grid[fr][5] = rook ? { ...rook, hasMoved: true } : null;
+    } else if (tc === 2) {
+      const rook = next.grid[fr][0];
+      next.grid[fr][0] = null;
+      next.grid[fr][3] = rook ? { ...rook, hasMoved: true } : null;
+    }
+  }
+  next.grid[tr][tc] = moved;
+  return next;
+}
+
+export function isInCheck(core: ChessCore, color: Color): boolean {
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      const p = core.grid[r][c];
+      if (p && p.color === color && p.type === "K") {
+        return isSquareAttacked(core, r, c, color === "w" ? "b" : "w");
+      }
+    }
+  }
+  return false;
+}
+
+export function legalMoves(core: ChessCore, r: number, c: number): Array<[number, number]> {
+  const p = core.grid[r][c];
+  if (!p || p.color !== core.turn) return [];
+  const pseudo = pseudoMoves(core, r, c);
+  return pseudo.filter(([tr, tc]) => {
+    const next = applyChessMove(core, [r, c], [tr, tc]);
+    return !isInCheck({ ...next, turn: p.color }, p.color);
+  });
+}
+
+function anyLegalMoves(core: ChessCore): boolean {
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      const p = core.grid[r][c];
+      if (!p || p.color !== core.turn) continue;
+      if (legalMoves(core, r, c).length > 0) return true;
+    }
+  }
+  return false;
+}
+
+export function chessRemoteInitialState(players: Array<{ peerId: string; name: string }>): ChessRemoteState {
+  return {
+    kind: "playing",
+    core: { grid: startGrid(), turn: "w", enPassant: null },
+    playerOrder: players.slice(0, 2).map((p) => p.peerId),
+    winner: null,
+    reason: null,
+  };
+}
+
+export function chessRemoteReducer(
+  state: ChessRemoteState,
+  action: ChessRemoteAction,
+  senderPeerId: string,
+  livePlayers: MinimalPlayer[],
+): ChessRemoteState {
+  const hostId = livePlayers.find((p) => p.isHost)?.peerId;
+
+  if (action.type === "move") {
+    if (state.kind !== "playing") return state;
+    const seatIdx = state.playerOrder.indexOf(senderPeerId);
+    const expected = state.core.turn === "w" ? 0 : 1;
+    if (seatIdx !== expected) return state;
+    const { from, to } = action;
+    const piece = state.core.grid[from[0]]?.[from[1]];
+    if (!piece || piece.color !== state.core.turn) return state;
+    const legal = legalMoves(state.core, from[0], from[1]);
+    if (!legal.some(([r, c]) => r === to[0] && c === to[1])) return state;
+    const nextCore = applyChessMove(state.core, from, to);
+    if (!anyLegalMoves(nextCore)) {
+      if (isInCheck(nextCore, nextCore.turn)) {
+        // Side to move is checkmated — the other side wins.
+        return {
+          ...state,
+          core: nextCore,
+          kind: "end",
+          winner: nextCore.turn === "w" ? "b" : "w",
+          reason: "checkmate",
+        };
+      }
+      return { ...state, core: nextCore, kind: "end", winner: "draw", reason: "stalemate" };
+    }
+    return { ...state, core: nextCore };
+  }
+
+  if (action.type === "rematch") {
+    if (senderPeerId !== hostId) return state;
+    if (state.kind !== "end") return state;
+    return {
+      kind: "playing",
+      core: { grid: startGrid(), turn: "w", enPassant: null },
+      playerOrder: state.playerOrder,
+      winner: null,
+      reason: null,
+    };
+  }
+
+  return state;
+}

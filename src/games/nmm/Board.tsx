@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
+import { NineMensMorrisRemoteBoard } from "./RemoteBoard";
 
 /** Nine Men's Morris — 2-player, 24 positions.
  *
@@ -88,7 +89,12 @@ function canMoveAnything(board: Board, player: Player, isFlying: boolean): boole
 
 type Phase = "place" | "move" | "capture-after" | "end";
 
-export const NineMensMorrisBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
+export const NineMensMorrisBoard: React.FC<GameComponentProps> = (props) => {
+  if (props.remote) return <NineMensMorrisRemoteBoard {...props} remote={props.remote} />;
+  return <NineMensMorrisLocalBoard {...props} />;
+};
+
+const NineMensMorrisLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
   const startedAt = useMemo(() => Date.now(), []);
   const [board, setBoard] = useState<Board>(() => Array<Player | null>(24).fill(null));
   const [turn, setTurn] = useState<Player>("A");

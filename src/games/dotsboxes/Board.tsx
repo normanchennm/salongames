@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
+import { DotsBoxesRemoteBoard } from "./RemoteBoard";
 
 /** Dots and Boxes — 2-player, 5x5 dots (4x4 boxes by default).
  *
@@ -82,7 +83,12 @@ function allLinesDrawn(b: BoardState): boolean {
   return true;
 }
 
-export const DotsBoxesBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
+export const DotsBoxesBoard: React.FC<GameComponentProps> = (props) => {
+  if (props.remote) return <DotsBoxesRemoteBoard {...props} remote={props.remote} />;
+  return <DotsBoxesLocalBoard {...props} />;
+};
+
+const DotsBoxesLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
   const startedAt = useMemo(() => Date.now(), []);
   const [board, setBoard] = useState<BoardState>(() => empty());
   const [turn, setTurn] = useState<"P1" | "P2">("P1");

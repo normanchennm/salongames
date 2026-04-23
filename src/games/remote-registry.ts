@@ -29,6 +29,11 @@ import { c4RemoteInitialState, c4RemoteReducer } from "./connect4/remote";
 import { reversiRemoteInitialState, reversiRemoteReducer } from "./reversi/remote";
 import { mancalaRemoteInitialState, mancalaRemoteReducer } from "./mancala/remote";
 import { checkersRemoteInitialState, checkersRemoteReducer } from "./checkers/remote";
+import { dbRemoteInitialState, dbRemoteReducer } from "./dotsboxes/remote";
+import { goRemoteInitialState, goRemoteReducer } from "./go/remote";
+import { nmmRemoteInitialState, nmmRemoteReducer } from "./nmm/remote";
+import { chessRemoteInitialState, chessRemoteReducer } from "./chess/remote";
+import { bgRemoteInitialState, bgRemoteReducer } from "./backgammon/remote";
 
 export const REMOTE_CONFIGS: Record<string, RemoteGameConfig> = {
   fibbage: { initialState: fibRemoteInitialState, reducer: fibRemoteReducer as RemoteGameConfig["reducer"] },
@@ -52,6 +57,11 @@ export const REMOTE_CONFIGS: Record<string, RemoteGameConfig> = {
   reversi: { initialState: reversiRemoteInitialState, reducer: reversiRemoteReducer as RemoteGameConfig["reducer"] },
   mancala: { initialState: mancalaRemoteInitialState, reducer: mancalaRemoteReducer as RemoteGameConfig["reducer"] },
   checkers: { initialState: checkersRemoteInitialState, reducer: checkersRemoteReducer as RemoteGameConfig["reducer"] },
+  dotsboxes: { initialState: dbRemoteInitialState, reducer: dbRemoteReducer as RemoteGameConfig["reducer"] },
+  go: { initialState: goRemoteInitialState, reducer: goRemoteReducer as RemoteGameConfig["reducer"] },
+  nmm: { initialState: nmmRemoteInitialState, reducer: nmmRemoteReducer as RemoteGameConfig["reducer"] },
+  chess: { initialState: chessRemoteInitialState, reducer: chessRemoteReducer as RemoteGameConfig["reducer"] },
+  backgammon: { initialState: bgRemoteInitialState, reducer: bgRemoteReducer as RemoteGameConfig["reducer"] },
 };
 
 export function getRemoteConfig(gameId: string): RemoteGameConfig | undefined {

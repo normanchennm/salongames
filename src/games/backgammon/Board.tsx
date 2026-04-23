@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
+import { BackgammonRemoteBoard } from "./RemoteBoard";
 
 /** Backgammon — simplified 2-player build.
  *
@@ -172,7 +173,12 @@ function Checker({ count, who }: { count: number; who: Player }) {
   return <div className={`flex h-5 items-center justify-center rounded-full ${bg} ${text} text-[10px] font-mono border border-border`}>{count > 1 ? count : ""}</div>;
 }
 
-export const BackgammonBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
+export const BackgammonBoard: React.FC<GameComponentProps> = (props) => {
+  if (props.remote) return <BackgammonRemoteBoard {...props} remote={props.remote} />;
+  return <BackgammonLocalBoard {...props} />;
+};
+
+const BackgammonLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
   const startedAt = useMemo(() => Date.now(), []);
   const [board, setBoard] = useState<BoardState>(() => startState());
   const [phase, setPhase] = useState<Phase>({ kind: "intro" });

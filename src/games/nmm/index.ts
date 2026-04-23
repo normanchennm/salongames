@@ -14,6 +14,7 @@ const nmm: Game = {
   description:
     "An ancient 2-player strategy game. Three phases: place 9 pieces, then slide along lines, then fly (when down to 3). Forming 3 in a row on a line captures an enemy piece — preferring those not already in mills. Reduce the opponent below 3 pieces or leave them without a move.",
   Component: NineMensMorrisBoard,
+  supportsRemote: true,
 };
 
 export default nmm;

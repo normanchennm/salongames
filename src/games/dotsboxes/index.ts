@@ -14,6 +14,7 @@ const dotsboxes: Game = {
   description:
     "Grid of dots, 4x4 boxes. Tap between two adjacent dots to draw a line. Close a box's fourth side to claim it and take another turn. When every line is drawn, most boxes wins.",
   Component: DotsBoxesBoard,
+  supportsRemote: true,
 };
 
 export default dotsboxes;

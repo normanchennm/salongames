@@ -14,6 +14,7 @@ const go: Game = {
   description:
     "9×9 beginner Go board. Place a stone on any empty intersection; opposing groups without liberties are captured. Suicide (self-capture that doesn't take anything) is illegal. Two consecutive passes end the game. Area scoring: stones + surrounded territory. White gets a 6.5 komi. Strict ko rule is deferred — self-police if it comes up.",
   Component: GoBoard,
+  supportsRemote: true,
 };
 
 export default go;
