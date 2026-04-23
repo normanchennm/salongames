@@ -139,13 +139,21 @@ export function GameRunner({ gameId }: { gameId: string }) {
     return (
       <div>
         <GameHero game={game} />
-        <header className="mb-10 mt-6">
-          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[hsl(var(--ember))]">
-            {game.category.replace("-", " ")}
+        <header className="mb-10 mt-8">
+          <div className="flex items-baseline gap-3">
+            <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-[hsl(var(--ember))]">
+              {game.category.replace("-", " ")}
+            </span>
+            <span className="h-px w-8 bg-[hsl(var(--ember))]" aria-hidden />
+          </div>
+          <h1 className="mt-3 font-display text-5xl italic leading-[0.95] text-fg sm:text-6xl">
+            {game.name}
+          </h1>
+          <p className="drop-cap mt-6 max-w-xl text-base leading-relaxed text-fg/85">
+            {game.description}
           </p>
-          <h1 className="mt-2 font-display text-5xl italic text-fg">{game.name}</h1>
-          <p className="mt-3 max-w-xl text-muted">{game.description}</p>
         </header>
+        <div className="hairline-heavy my-10" />
         <ModePicker onPick={handlePickMode} allowLocal={!game.hideLocalOption} />
       </div>
     );
@@ -157,12 +165,19 @@ export function GameRunner({ gameId }: { gameId: string }) {
       <div>
         {!game.supportsRemote && <GameHero game={game} />}
         {!game.supportsRemote && (
-          <header className="mb-10 mt-6">
-            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[hsl(var(--ember))]">
-              {game.category.replace("-", " ")}
+          <header className="mb-10 mt-8">
+            <div className="flex items-baseline gap-3">
+              <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-[hsl(var(--ember))]">
+                {game.category.replace("-", " ")}
+              </span>
+              <span className="h-px w-8 bg-[hsl(var(--ember))]" aria-hidden />
+            </div>
+            <h1 className="mt-3 font-display text-5xl italic leading-[0.95] text-fg sm:text-6xl">
+              {game.name}
+            </h1>
+            <p className="drop-cap mt-6 max-w-xl text-base leading-relaxed text-fg/85">
+              {game.description}
             </p>
-            <h1 className="mt-2 font-display text-5xl italic text-fg">{game.name}</h1>
-            <p className="mt-3 max-w-xl text-muted">{game.description}</p>
           </header>
         )}
         {game.supportsRemote && (

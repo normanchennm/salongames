@@ -3,13 +3,18 @@
 @tailwind utilities;
 
 :root {
-  /* Dark-by-default. Stashd-sibling palette. */
+  /* Dark-by-default. Warm paper on low-lit wood. */
   --background: 28 10% 6%;        /* #100d0b */
   --foreground: 38 25% 94%;       /* #f4ede0 */
-  --ember: 25 85% 60%;            /* #ee9d52 */
-  --ember-soft: 25 60% 40%;       /* #b07a45 */
+  --ember: 25 85% 60%;            /* #ee9d52 — rare, used for one thing per screen */
+  --ember-soft: 25 45% 38%;       /* #8f5f3a — the ember when it isn't the hero */
   --muted: 34 10% 49%;            /* #8c7f70 */
   --border: 28 15% 14%;           /* #2a241e */
+
+  /* Fraunces variable axes — pushed for character. WONK on, SOFT mid.
+     Tightened tracking on italic. Editorial tone dial. */
+  --fraunces-display: "SOFT" 60, "WONK" 1, "opsz" 144;
+  --fraunces-italic: "SOFT" 100, "WONK" 1, "opsz" 120;
 }
 
 html,
@@ -22,15 +27,67 @@ body {
   font-family: var(--font-mono), Consolas, monospace;
   -webkit-font-smoothing: antialiased;
   font-feature-settings: "ss01", "cv11";
+  position: relative;
 }
 
-/* Serif utility for editorial copy + wordmark. */
+/* Grain — a 180x180 SVG noise tile baked as a data URL, blended low.
+   Turns "dark site" into "dark paper." Fixed-attached so it doesn't
+   track scroll, opacity tuned so it reads as texture, not artifact. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.055;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.7 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  background-size: 180px 180px;
+}
+
+/* Ember halo behind the fold — a single warm smudge in the upper left
+   that bleeds off, so the background isn't a flat slab. Fixed, slow,
+   atmospheric. The site has a "light source" now. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(
+      ellipse 80vw 50vh at 15% -10%,
+      hsl(var(--ember) / 0.09) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 60vw 40vh at 110% 100%,
+      hsl(var(--ember) / 0.05) 0%,
+      transparent 55%
+    );
+}
+
+/* Ensure content floats above the body::before grain. */
+body > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* Serif utility — Fraunces pushed into "editorial headline" territory
+   via variable axes. Every .font-display across the app gets this. */
 .font-display {
   font-family: var(--font-serif), Georgia, "Times New Roman", serif;
-  font-feature-settings: "ss01";
+  font-feature-settings: "ss01", "ss02";
+  font-variation-settings: var(--fraunces-display);
 }
 
-/* Hairline divider used across the app — editorial gallery feel. */
+.font-display.italic,
+.italic.font-display {
+  font-variation-settings: var(--fraunces-italic);
+}
+
+/* A horizontal rule that evokes a silver-gelatin-print gallery label:
+   a thin ember line that fades at both ends. */
 .hairline {
   background: linear-gradient(
     to right,
@@ -39,4 +96,100 @@ body {
     transparent
   );
   height: 1px;
+}
+
+/* Heavier rule for section breaks. A solid ember-soft pinstripe with
+   an em-dash-style negative space at the start — reads as editorial
+   column rule. */
+.hairline-heavy {
+  position: relative;
+  height: 1px;
+  background: hsl(var(--ember-soft) / 0.55);
+}
+.hairline-heavy::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: -1px;
+  height: 3px;
+  width: 2.5rem;
+  background: hsl(var(--ember));
+}
+
+/* Rotated marginalia — vertical running text for issue/vol tags,
+   catalog numbering, page-edge labels. Mono, small caps, spaced. */
+.marginalia {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-family: var(--font-mono), Consolas, monospace;
+  font-size: 10px;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: hsl(var(--muted));
+}
+
+/* Drop cap. Use sparingly — first-paragraph of long copy only. */
+.drop-cap::first-letter {
+  font-family: var(--font-serif), Georgia, "Times New Roman", serif;
+  font-style: italic;
+  font-variation-settings: var(--fraunces-italic);
+  font-size: 4.25em;
+  line-height: 0.85;
+  float: left;
+  padding-right: 0.1em;
+  padding-top: 0.08em;
+  color: hsl(var(--ember));
+}
+
+/* Slow, staggered entrance for catalog cards. The :nth-child delays
+   give the list a magazine "reveal" cadence. Reduce motion respects
+   the prefers-reduced-motion query. */
+.stagger > * {
+  opacity: 0;
+  animation: stagger-in 0.5s ease-out forwards;
+}
+.stagger > *:nth-child(1)  { animation-delay: 0.00s; }
+.stagger > *:nth-child(2)  { animation-delay: 0.04s; }
+.stagger > *:nth-child(3)  { animation-delay: 0.08s; }
+.stagger > *:nth-child(4)  { animation-delay: 0.12s; }
+.stagger > *:nth-child(5)  { animation-delay: 0.16s; }
+.stagger > *:nth-child(6)  { animation-delay: 0.20s; }
+.stagger > *:nth-child(7)  { animation-delay: 0.24s; }
+.stagger > *:nth-child(8)  { animation-delay: 0.28s; }
+.stagger > *:nth-child(9)  { animation-delay: 0.32s; }
+.stagger > *:nth-child(10) { animation-delay: 0.36s; }
+.stagger > *:nth-child(11) { animation-delay: 0.40s; }
+.stagger > *:nth-child(12) { animation-delay: 0.44s; }
+.stagger > *:nth-child(n + 13) { animation-delay: 0.48s; }
+
+@keyframes stagger-in {
+  0%   { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stagger > * { opacity: 1; animation: none; }
+  body::before, body::after { display: none; }
+}
+
+/* Room-code hero — the 5-char code rendered gallery-sized. Fraunces
+   italic on maximum WONK so each letter has personality. Used in the
+   lobby and the mode-picker mock. */
+.code-hero {
+  font-family: var(--font-serif), Georgia, serif;
+  font-style: italic;
+  font-weight: 500;
+  font-variation-settings: "SOFT" 100, "WONK" 1, "opsz" 144;
+  letter-spacing: 0.02em;
+  line-height: 0.9;
+}
+
+/* Subtle pulse for the "waiting" state in the lobby — an ember dot
+   that breathes at 3s intervals, synced with prose. */
+@keyframes ember-pulse {
+  0%, 100% { opacity: 0.35; }
+  50%      { opacity: 0.95; }
+}
+.ember-pulse {
+  animation: ember-pulse 2.6s ease-in-out infinite;
 }

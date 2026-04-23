@@ -63,26 +63,34 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${fraunces.variable} ${geistMono.variable}`}>
       <body className="min-h-screen bg-bg text-fg">
         <RegisterSW />
-        <header className="border-b border-border">
+        <header className="border-b border-border/70">
           <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
             <Wordmark variant="inline" size="md" href="/" />
-            <nav className="flex items-center gap-5 font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
-              <a href="/" className="transition-colors hover:text-fg">Games</a>
-              <a href="/date/" className="transition-colors hover:text-fg">Date night</a>
-              <a href="/pro/" className="inline-flex items-center gap-1 text-[hsl(var(--ember))] transition-opacity hover:opacity-80">
-                ✨ Pro
+            <nav className="flex items-center gap-5 font-mono text-[10px] uppercase tracking-[0.25em] text-muted">
+              <a href="/" className="transition-colors hover:text-fg">§ games</a>
+              <a href="/date/" className="transition-colors hover:text-fg">§ date night</a>
+              <a
+                href="/pro/"
+                className="text-[hsl(var(--ember))] transition-opacity hover:opacity-80"
+              >
+                § pro
               </a>
-              <a href="/stats/" className="transition-colors hover:text-fg">Stats</a>
+              <a href="/stats/" className="transition-colors hover:text-fg">§ stats</a>
               <MuteToggle />
             </nav>
           </div>
         </header>
         <main className="mx-auto max-w-5xl px-6 py-10">{children}</main>
         <FeedbackButton />
-        <footer className="mt-16 border-t border-border">
-          <div className="mx-auto flex max-w-5xl items-center justify-between gap-6 px-6 py-8 font-mono text-[10px] uppercase tracking-[0.2em] text-muted">
+        <footer className="mt-16 border-t border-border/70">
+          <div className="mx-auto flex max-w-5xl flex-wrap items-baseline justify-between gap-6 px-6 py-8 font-mono text-[10px] uppercase tracking-[0.25em] text-muted">
             <Wordmark variant="inline" size="sm" />
-            <span>pass and play · no servers · no accounts</span>
+            <span className="text-muted/80">
+              each on your own phone — or pass one around
+            </span>
+            <span className="text-muted/60">
+              — fin
+            </span>
           </div>
         </footer>
       </body>

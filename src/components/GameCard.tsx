@@ -2,25 +2,27 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Users, Clock, Lock, Sparkles } from "lucide-react";
+import { Lock, Sparkles } from "lucide-react";
 import type { Game } from "@/games/types";
 import { isGameLocked, loadProState } from "@/lib/pro";
 import { ProGate } from "@/components/ProGate";
 
-/** Catalog card — one per game. Renders an AI-generated cover image
- *  from /covers/<id>.jpg if present; falls back to the game's gradient
- *  token if the file is missing (e.g., before covers are generated).
- *  Image + gradient overlay keep the grid reading as a curated library
- *  either way.
- *
- *  If the game is tier="pro" and Pro isn't unlocked on this device,
- *  the card is blurred + badged and tapping opens the Pro gate instead
- *  of navigating to the game. */
+/** Catalog card — one per game. Editorial composition: cover + caption.
+ *  Category label hangs off the cover's top edge as a marker (not a
+ *  duplicate with the title). Meta line is typographic (em-dash
+ *  separators, no icons) so it reads as caption, not UI. */
+
+const CATEGORY_MARK: Record<Game["category"], string> = {
+  "social-deduction": "Social Deduction",
+  "party": "Party",
+  "trivia": "Trivia",
+  "card": "Card",
+  "abstract": "Abstract",
+};
 
 interface GameCardProps {
   game: Game;
-  /** Optional ribbon shown above the card hero — e.g. "HOT", "NEW",
-   *  "EXCLUSIVE". Used to highlight Pro drops on the catalog. */
+  /** Optional ribbon — "HOT", "NEW", "EXCLUSIVE". */
   ribbon?: "hot" | "new" | "exclusive";
 }
 
@@ -40,7 +42,6 @@ export function GameCard({ game, ribbon }: GameCardProps) {
 
   const card = (
     <>
-      {/* Image / gradient hero */}
       <div className="relative aspect-[4/3] overflow-hidden">
         {showImage && (
           <img
@@ -48,15 +49,15 @@ export function GameCard({ game, ribbon }: GameCardProps) {
             alt=""
             loading="lazy"
             onError={() => setImageFailed(true)}
-            className={`absolute inset-0 h-full w-full object-cover transition-all duration-500 group-hover:scale-105 ${
-              locked ? "blur-md scale-110" : ""
+            className={`absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04] ${
+              locked ? "scale-110 blur-md" : ""
             }`}
           />
         )}
         <div
           aria-hidden
           className={`pointer-events-none absolute inset-0 ${
-            showImage ? "bg-gradient-to-t from-bg via-bg/40 to-transparent" : ""
+            showImage ? "bg-gradient-to-t from-bg via-bg/30 to-transparent" : ""
           }`}
           style={
             showImage
@@ -66,10 +67,23 @@ export function GameCard({ game, ribbon }: GameCardProps) {
                 }
           }
         />
-        {/* Ribbon */}
+        {/* Ember catch-light along the caption seam. Invisible at rest,
+            fades in on hover — a quiet, non-bordery hover state. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[hsl(var(--ember)/0.55)] to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+        />
+        {/* Category marker — small caps + short ember rule. Replaces
+            the duplicate category line that was above the title. */}
+        <span className="absolute left-3 top-3 z-10 inline-flex flex-col items-start">
+          <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-[hsl(var(--ember))]">
+            {CATEGORY_MARK[game.category]}
+          </span>
+          <span className="mt-1 h-px w-6 bg-[hsl(var(--ember))]" aria-hidden />
+        </span>
         {ribbon && (
           <span
-            className={`absolute right-3 top-3 rounded-full px-2.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.2em] ${
+            className={`absolute right-3 top-3 z-10 rounded-sm px-2 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.2em] ${
               ribbon === "hot"
                 ? "bg-[hsl(var(--ember))] text-bg"
                 : ribbon === "exclusive"
@@ -80,10 +94,9 @@ export function GameCard({ game, ribbon }: GameCardProps) {
             {ribbon}
           </span>
         )}
-        {/* Lock overlay badge */}
         {locked && (
           <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
-            <div className="flex flex-col items-center gap-2 rounded-full border border-[hsl(var(--ember))] bg-bg/85 px-4 py-2 backdrop-blur">
+            <div className="flex flex-col items-center gap-1 rounded-full border border-[hsl(var(--ember))] bg-bg/85 px-4 py-2 backdrop-blur">
               <Lock className="h-4 w-4 text-[hsl(var(--ember))]" />
               <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[hsl(var(--ember))]">
                 Pro
@@ -93,31 +106,26 @@ export function GameCard({ game, ribbon }: GameCardProps) {
         )}
       </div>
 
-      {/* Text block */}
-      <div className="relative z-10 p-5">
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[hsl(var(--ember))]">
-            {game.category.replace("-", " ")}
-          </span>
+      {/* Caption — editorial type hierarchy. Title shifts to ember on
+          hover; meta row is caption-style mono with em-dashes. */}
+      <div className="relative z-10 px-5 pb-5 pt-4">
+        <div className="flex items-baseline justify-between gap-3">
+          <h3 className="font-display text-2xl italic leading-tight text-fg transition-colors group-hover:text-[hsl(var(--ember))]">
+            {game.name}
+          </h3>
           {game.tier === "pro" && (
-            <span className="inline-flex items-center gap-1 rounded border border-[hsl(var(--ember)/0.5)] bg-[hsl(var(--ember)/0.1)] px-1.5 py-px font-mono text-[9px] uppercase tracking-wider text-[hsl(var(--ember))]">
+            <span className="inline-flex shrink-0 items-center gap-1 font-mono text-[9px] uppercase tracking-[0.2em] text-[hsl(var(--ember-soft))]">
               <Sparkles className="h-2.5 w-2.5" />
               pro
             </span>
           )}
         </div>
-        <h3 className="mt-2 font-display text-2xl italic text-fg">{game.name}</h3>
-        <p className="mt-1 text-sm leading-snug text-muted">{game.tagline}</p>
-        <div className="mt-4 flex items-center gap-4 font-mono text-[10px] uppercase tracking-wider text-muted">
-          <span className="inline-flex items-center gap-1.5">
-            <Users className="h-3 w-3" />
-            {game.minPlayers}–{game.maxPlayers}
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <Clock className="h-3 w-3" />
-            ~{game.estimatedMinutes}m
-          </span>
-        </div>
+        <p className="mt-1 text-sm italic leading-snug text-muted">
+          {game.tagline}
+        </p>
+        <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.22em] text-muted/80">
+          {game.minPlayers}–{game.maxPlayers} players &mdash; ~{game.estimatedMinutes} min
+        </p>
       </div>
     </>
   );
@@ -128,7 +136,7 @@ export function GameCard({ game, ribbon }: GameCardProps) {
         <button
           type="button"
           onClick={() => setGateOpen(true)}
-          className="group relative block w-full overflow-hidden rounded-lg border border-border bg-bg/40 text-left transition-colors hover:border-[hsl(var(--ember)/0.6)]"
+          className="group relative block w-full overflow-hidden rounded-sm border border-border bg-bg/40 text-left transition-colors hover:border-[hsl(var(--ember-soft))]"
         >
           {card}
         </button>
@@ -140,7 +148,7 @@ export function GameCard({ game, ribbon }: GameCardProps) {
   return (
     <Link
       href={`/games/${game.id}/`}
-      className="group relative block overflow-hidden rounded-lg border border-border bg-bg/40 transition-colors hover:border-[hsl(var(--ember)/0.6)]"
+      className="group relative block overflow-hidden rounded-sm border border-border bg-bg/40 transition-colors hover:border-[hsl(var(--ember-soft))]"
     >
       {card}
     </Link>
