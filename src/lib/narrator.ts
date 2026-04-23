@@ -202,3 +202,51 @@ export const LIARSDICE_CUES = {
   bluffCaught: "/narration/liarsdice/bluff-caught.mp3",
   winner: "/narration/liarsdice/winner.mp3",
 } as const;
+
+/** Trivia — game-show cues for round start, right/wrong pings, winner. */
+export const TRIVIA_CUES = {
+  roundStart: "/narration/trivia/round-start.mp3",
+  correct: "/narration/trivia/correct.mp3",
+  wrong: "/narration/trivia/wrong.mp3",
+  winner: "/narration/trivia/winner.mp3",
+} as const;
+
+/** Celebrity — charades-with-clues. Timer beats + team switch. */
+export const CELEBRITY_CUES = {
+  roundStart: "/narration/celebrity/round-start.mp3",
+  tenSecondsLeft: "/narration/celebrity/ten-seconds.mp3",
+  timeUp: "/narration/celebrity/time-up.mp3",
+  winner: "/narration/celebrity/winner.mp3",
+} as const;
+
+/** Fishbowl — same tension as Celebrity but across three rounds. */
+export const FISHBOWL_CUES = {
+  roundStart: "/narration/fishbowl/round-start.mp3",
+  roundTransition: "/narration/fishbowl/round-transition.mp3",
+  tenSecondsLeft: "/narration/fishbowl/ten-seconds.mp3",
+  timeUp: "/narration/fishbowl/time-up.mp3",
+  winner: "/narration/fishbowl/winner.mp3",
+} as const;
+
+/** Charades — simple timer-based cues. */
+export const CHARADES_CUES = {
+  roundStart: "/narration/charades/round-start.mp3",
+  tenSecondsLeft: "/narration/charades/ten-seconds.mp3",
+  timeUp: "/narration/charades/time-up.mp3",
+  winner: "/narration/charades/winner.mp3",
+} as const;
+
+/** Wordle — correct-guess + lose drama. */
+export const WORDLE_CUES = {
+  correct: "/narration/wordle/correct.mp3",
+  close: "/narration/wordle/close.mp3",
+  lose: "/narration/wordle/lose.mp3",
+} as const;
+
+/** Hangman — letter-reveal + final tension. */
+export const HANGMAN_CUES = {
+  wrongLetter: "/narration/hangman/wrong-letter.mp3",
+  lastChance: "/narration/hangman/last-chance.mp3",
+  winner: "/narration/hangman/winner.mp3",
+  lose: "/narration/hangman/lose.mp3",
+} as const;

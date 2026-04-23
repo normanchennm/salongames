@@ -58,7 +58,9 @@ export const ChessRemoteBoard: React.FC<Props> = ({ players, remote, onComplete,
               ? "Draw — 50-move rule"
               : state.reason === "insufficient-material"
                 ? "Draw — insufficient material"
-                : "Draw",
+                : state.reason === "threefold-repetition"
+                  ? "Draw — threefold repetition"
+                  : "Draw",
       ],
     });
   }, [isHost, state, players, onComplete, startedAt]);
@@ -114,7 +116,9 @@ export const ChessRemoteBoard: React.FC<Props> = ({ players, remote, onComplete,
                     ? "Draw · 50-move"
                     : state.reason === "insufficient-material"
                       ? "Draw · insufficient material"
-                      : "Draw"
+                      : state.reason === "threefold-repetition"
+                        ? "Draw · threefold"
+                        : "Draw"
               : myTurn
                 ? `Your turn${inCheck ? " (check)" : ""}`
                 : `${currentName}'s turn${inCheck ? " (check)" : ""}`}

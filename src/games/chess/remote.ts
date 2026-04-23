@@ -18,6 +18,11 @@ export interface ChessCore {
   /** Half-moves since the last pawn move or capture. 100 half-moves
    *  (50 full moves each side) triggers the 50-move draw. */
   halfmoveClock: number;
+  /** Compact position keys seen so far this game. Three occurrences
+   *  of the same key triggers a threefold-repetition draw. Keys
+   *  encode: board cells + turn + castling rights + en-passant target
+   *  (the four things that define "same position" for repetition). */
+  positionHistory: string[];
 }
 
 export type ChessRemoteState = {
@@ -25,7 +30,13 @@ export type ChessRemoteState = {
   core: ChessCore;
   playerOrder: string[]; // [white, black]
   winner: "w" | "b" | "draw" | null;
-  reason: "checkmate" | "stalemate" | "fifty-move" | "insufficient-material" | null;
+  reason:
+    | "checkmate"
+    | "stalemate"
+    | "fifty-move"
+    | "insufficient-material"
+    | "threefold-repetition"
+    | null;
 };
 
 export type ChessRemoteAction =
@@ -194,6 +205,8 @@ function applyChessMove(core: ChessCore, from: [number, number], to: [number, nu
     turn: core.turn === "w" ? "b" : "w",
     enPassant: null,
     halfmoveClock: core.halfmoveClock + 1,
+    // Caller (reducer) replaces this after hashing the resulting position.
+    positionHistory: core.positionHistory,
   };
   const [fr, fc] = from, [tr, tc] = to;
   const piece = next.grid[fr][fc];
@@ -230,6 +243,36 @@ function applyChessMove(core: ChessCore, from: [number, number], to: [number, nu
   }
   next.grid[tr][tc] = moved;
   return next;
+}
+
+/** Compact position key for threefold-repetition detection. Encodes
+ *  the four things that define "same position": board contents, side
+ *  to move, castling rights (derived from kings' and rooks' hasMoved
+ *  flags), and en-passant target. Two positions are repetitions only
+ *  when every one of these matches. */
+export function positionKey(core: ChessCore): string {
+  const cells: string[] = [];
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      const p = core.grid[r][c];
+      cells.push(p ? p.color + p.type : "-");
+    }
+  }
+  // Castling rights — a 4-char string of 1/0 for each side's K- and
+  // Q-side availability. If the king or relevant rook has moved, that
+  // side is unavailable.
+  const castlingFor = (color: Color): string => {
+    const rank = color === "w" ? 7 : 0;
+    const king = core.grid[rank][4];
+    const kingOk = !!king && king.color === color && king.type === "K" && !king.hasMoved;
+    const rookK = core.grid[rank][7];
+    const rookQ = core.grid[rank][0];
+    const kSide = kingOk && !!rookK && rookK.color === color && rookK.type === "R" && !rookK.hasMoved ? "1" : "0";
+    const qSide = kingOk && !!rookQ && rookQ.color === color && rookQ.type === "R" && !rookQ.hasMoved ? "1" : "0";
+    return kSide + qSide;
+  };
+  const ep = core.enPassant ? `${core.enPassant[0]},${core.enPassant[1]}` : "-";
+  return `${cells.join("")}|${core.turn}|${castlingFor("w")}${castlingFor("b")}|${ep}`;
 }
 
 /** Insufficient-material draw: positions where neither side has any
@@ -292,9 +335,19 @@ function anyLegalMoves(core: ChessCore): boolean {
 }
 
 export function chessRemoteInitialState(players: Array<{ peerId: string; name: string }>): ChessRemoteState {
+  const core: ChessCore = {
+    grid: startGrid(),
+    turn: "w",
+    enPassant: null,
+    halfmoveClock: 0,
+    positionHistory: [],
+  };
+  // Seed the history with the starting position so that reaching it
+  // again (hypothetical but correct) counts toward the repetition rule.
+  core.positionHistory = [positionKey(core)];
   return {
     kind: "playing",
-    core: { grid: startGrid(), turn: "w", enPassant: null, halfmoveClock: 0 },
+    core,
     playerOrder: players.slice(0, 2).map((p) => p.peerId),
     winner: null,
     reason: null,
@@ -320,6 +373,9 @@ export function chessRemoteReducer(
     const legal = legalMoves(state.core, from[0], from[1]);
     if (!legal.some(([r, c]) => r === to[0] && c === to[1])) return state;
     const nextCore = applyChessMove(state.core, from, to);
+    // Record this position in the history, then check for threefold.
+    const key = positionKey(nextCore);
+    nextCore.positionHistory = [...state.core.positionHistory, key];
     if (!anyLegalMoves(nextCore)) {
       if (isInCheck(nextCore, nextCore.turn)) {
         // Side to move is checkmated — the other side wins.
@@ -347,15 +403,35 @@ export function chessRemoteReducer(
         reason: "insufficient-material",
       };
     }
+    // Draw by threefold repetition — same position, same side to move,
+    // same castling rights, same en-passant target, three times.
+    const occurrences = nextCore.positionHistory.filter((k) => k === key).length;
+    if (occurrences >= 3) {
+      return {
+        ...state,
+        core: nextCore,
+        kind: "end",
+        winner: "draw",
+        reason: "threefold-repetition",
+      };
+    }
     return { ...state, core: nextCore };
   }
 
   if (action.type === "rematch") {
     if (senderPeerId !== hostId) return state;
     if (state.kind !== "end") return state;
+    const core: ChessCore = {
+      grid: startGrid(),
+      turn: "w",
+      enPassant: null,
+      halfmoveClock: 0,
+      positionHistory: [],
+    };
+    core.positionHistory = [positionKey(core)];
     return {
       kind: "playing",
-      core: { grid: startGrid(), turn: "w", enPassant: null, halfmoveClock: 0 },
+      core,
       playerOrder: state.playerOrder,
       winner: null,
       reason: null,

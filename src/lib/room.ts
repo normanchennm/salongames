@@ -2,6 +2,15 @@
  *  peer WebRTC data channels and the public peerjs.com signaling
  *  broker — no backend you own.
  *
+ *  NAT TRAVERSAL
+ *  =============
+ *  Direct peer-to-peer works on the same LAN and through most cone
+ *  NATs via STUN (Google + Cloudflare public servers). Symmetric NAT
+ *  — common on mobile carriers and some home/office routers — can't
+ *  be hole-punched, so we also configure free public TURN relays
+ *  (openrelay.metered.ca). When STUN fails, traffic is relayed
+ *  through TURN: slightly higher latency but actually works.
+ *
  *  ARCHITECTURE
  *  ============
  *  - Authoritative host model. The host's device runs the game
@@ -141,6 +150,39 @@ function peerIdFor(): string {
 
 function now() { return Date.now(); }
 
+// WebRTC ICE servers. PeerJS's default is Google STUN only — that
+// handles same-device and most same-LAN cases but fails across
+// symmetric NAT (common on mobile carriers and some home routers),
+// which was showing up as "works across tabs but not across devices".
+// Free public TURN relays from openrelay.metered.ca handle the
+// fallback when direct hole-punching can't succeed. Credentials are
+// public and rate-limited — fine for a party game, not for scale.
+const ICE_SERVERS = [
+  { urls: "stun:stun.l.google.com:19302" },
+  { urls: "stun:stun1.l.google.com:19302" },
+  { urls: "stun:stun.cloudflare.com:3478" },
+  {
+    urls: "turn:openrelay.metered.ca:80",
+    username: "openrelayproject",
+    credential: "openrelayproject",
+  },
+  {
+    urls: "turn:openrelay.metered.ca:443",
+    username: "openrelayproject",
+    credential: "openrelayproject",
+  },
+  {
+    urls: "turn:openrelay.metered.ca:443?transport=tcp",
+    username: "openrelayproject",
+    credential: "openrelayproject",
+  },
+];
+
+const PEER_OPTS = {
+  debug: 1,
+  config: { iceServers: ICE_SERVERS },
+};
+
 interface Persisted {
   code: string;
   gameId: string;
@@ -200,7 +242,7 @@ class Host<S, A> implements RoomHandle<S, A> {
       },
     ];
     this.snapshot = this.buildSnapshot("connecting");
-    this.peer = new Peer(myId, { debug: 1 });
+    this.peer = new Peer(myId, PEER_OPTS);
     this.peer.on("open", () => {
       persist({ code, gameId: opts.gameId, peerId: myId, playerName: opts.playerName, isHost: true, savedAt: now() });
       this.snapshot = this.buildSnapshot("ready");
@@ -378,7 +420,7 @@ class Joiner<S, A> implements RoomHandle<S, A> {
       state: null,
       status: "connecting",
     };
-    this.peer = new Peer(this.myPeerId, { debug: 1 });
+    this.peer = new Peer(this.myPeerId, PEER_OPTS);
     this.peer.on("open", () => {
       persist({ code, gameId, peerId: this.myPeerId, playerName, isHost: false, savedAt: now() });
       this.connectToHost();
@@ -389,7 +431,7 @@ class Joiner<S, A> implements RoomHandle<S, A> {
       if (e.type === "unavailable-id") {
         this.myPeerId = peerIdFor();
         this.peer.destroy();
-        this.peer = new Peer(this.myPeerId, { debug: 1 });
+        this.peer = new Peer(this.myPeerId, PEER_OPTS);
         this.peer.on("open", () => this.connectToHost());
         return;
       }

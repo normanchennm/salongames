@@ -39,6 +39,7 @@ type Phase =
   | { kind: "pass"; stepIndex: number; playerIndex: number; steps: ChainStep[] }
   | { kind: "create-caption"; stepIndex: number; playerIndex: number; steps: ChainStep[]; text: string }
   | { kind: "create-drawing"; stepIndex: number; playerIndex: number; steps: ChainStep[]; dataUrl: string }
+  | { kind: "step-hidden"; stepIndex: number; playerIndex: number; steps: ChainStep[] }
   | { kind: "reveal-intro"; steps: ChainStep[] }
   | { kind: "reveal"; steps: ChainStep[]; cursor: number }
   | { kind: "end"; steps: ChainStep[] };
@@ -150,13 +151,12 @@ const TelephonePicLocalBoard: React.FC<GameComponentProps> = ({ players, onCompl
     const commit = (): void => {
       const newStep: CaptionStep = { kind: "caption", authorId: current.id, text: p.text.trim() };
       const steps = [...p.steps, newStep];
-      const nextStep = p.stepIndex + 1;
-      if (nextStep >= totalSteps) {
-        setPhase({ kind: "reveal-intro", steps });
-      } else {
-        const nextPlayer = (p.playerIndex + 1) % players.length;
-        setPhase({ kind: "pass", stepIndex: nextStep, playerIndex: nextPlayer, steps });
-      }
+      setPhase({
+        kind: "step-hidden",
+        stepIndex: p.stepIndex,
+        playerIndex: p.playerIndex,
+        steps,
+      });
     };
 
     return (
@@ -195,8 +195,55 @@ const TelephonePicLocalBoard: React.FC<GameComponentProps> = ({ players, onCompl
           onClick={commit}
           className="mt-4 w-full rounded-md bg-[hsl(var(--ember))] py-3 font-mono text-[11px] uppercase tracking-wider text-bg transition-opacity hover:opacity-90 disabled:opacity-40"
         >
-          Hide & pass →
+          Got it — hide
         </button>
+      </section>
+    );
+  }
+
+  // --- STEP HIDDEN (hand-off after caption or drawing) ----------
+  if (phase.kind === "step-hidden") {
+    const nextStep = phase.stepIndex + 1;
+    const nextPlayer = (phase.playerIndex + 1) % players.length;
+    const nextName = nextStep < totalSteps ? players[nextPlayer].name : null;
+    const justMade = phase.steps[phase.steps.length - 1]?.kind === "drawing" ? "drawing" : "caption";
+    return (
+      <section className="mx-auto max-w-md animate-fade-up text-center">
+        <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-[hsl(var(--ember))]">
+          {justMade === "drawing" ? "Drawing hidden" : "Caption hidden"}
+        </p>
+        {nextName ? (
+          <>
+            <h2 className="mt-4 font-display text-4xl italic">Hand the phone to {nextName}.</h2>
+            <p className="mt-3 text-sm text-muted">
+              Screen is safe. Don&apos;t tap until {nextName} is holding it.
+            </p>
+            <button
+              type="button"
+              onClick={() => setPhase({
+                kind: "pass",
+                stepIndex: nextStep,
+                playerIndex: nextPlayer,
+                steps: phase.steps,
+              })}
+              className="mt-10 w-full rounded-md border border-border bg-bg/40 py-3 font-mono text-[11px] uppercase tracking-wider text-muted transition-colors hover:border-[hsl(var(--ember)/0.4)] hover:text-fg"
+            >
+              I&apos;ve handed it to {nextName} →
+            </button>
+          </>
+        ) : (
+          <>
+            <h2 className="mt-4 font-display text-4xl italic">The chain is complete.</h2>
+            <p className="mt-3 text-sm text-muted">Time to reveal it.</p>
+            <button
+              type="button"
+              onClick={() => setPhase({ kind: "reveal-intro", steps: phase.steps })}
+              className="mt-10 w-full rounded-md bg-[hsl(var(--ember))] py-3 font-mono text-[11px] uppercase tracking-wider text-bg transition-opacity hover:opacity-90"
+            >
+              Reveal →
+            </button>
+          </>
+        )}
       </section>
     );
   }
@@ -211,13 +258,12 @@ const TelephonePicLocalBoard: React.FC<GameComponentProps> = ({ players, onCompl
     const commit = (): void => {
       const newStep: DrawStep = { kind: "drawing", authorId: current.id, dataUrl: p.dataUrl };
       const steps = [...p.steps, newStep];
-      const nextStep = p.stepIndex + 1;
-      if (nextStep >= totalSteps) {
-        setPhase({ kind: "reveal-intro", steps });
-      } else {
-        const nextPlayer = (p.playerIndex + 1) % players.length;
-        setPhase({ kind: "pass", stepIndex: nextStep, playerIndex: nextPlayer, steps });
-      }
+      setPhase({
+        kind: "step-hidden",
+        stepIndex: p.stepIndex,
+        playerIndex: p.playerIndex,
+        steps,
+      });
     };
 
     return (
@@ -238,7 +284,7 @@ const TelephonePicLocalBoard: React.FC<GameComponentProps> = ({ players, onCompl
           onClick={commit}
           className="mt-4 w-full rounded-md bg-[hsl(var(--ember))] py-3 font-mono text-[11px] uppercase tracking-wider text-bg transition-opacity hover:opacity-90 disabled:opacity-40"
         >
-          Done — hide & pass →
+          Got it — hide
         </button>
       </section>
     );

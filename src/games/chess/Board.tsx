@@ -22,6 +22,31 @@ interface State {
   turn: Color;
   enPassant: [number, number] | null; // target square for capture
   halfmoveClock: number; // half-moves since last pawn move or capture
+  positionHistory: string[]; // compact position keys for threefold
+}
+
+/** Compact position key. Same four dimensions as FIDE threefold:
+ *  board contents + side to move + castling rights + en-passant. */
+function positionKey(state: State): string {
+  const cells: string[] = [];
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      const p = state.grid[r][c];
+      cells.push(p ? p.color + p.type : "-");
+    }
+  }
+  const castlingFor = (color: Color): string => {
+    const rank = color === "w" ? 7 : 0;
+    const king = state.grid[rank][4];
+    const kingOk = !!king && king.color === color && king.type === "K" && !king.hasMoved;
+    const rookK = state.grid[rank][7];
+    const rookQ = state.grid[rank][0];
+    const kSide = kingOk && !!rookK && rookK.color === color && rookK.type === "R" && !rookK.hasMoved ? "1" : "0";
+    const qSide = kingOk && !!rookQ && rookQ.color === color && rookQ.type === "R" && !rookQ.hasMoved ? "1" : "0";
+    return kSide + qSide;
+  };
+  const ep = state.enPassant ? `${state.enPassant[0]},${state.enPassant[1]}` : "-";
+  return `${cells.join("")}|${state.turn}|${castlingFor("w")}${castlingFor("b")}|${ep}`;
 }
 
 function startGrid(): Grid {
@@ -182,7 +207,7 @@ function attackMoves(state: State, r: number, c: number): [number, number][] {
 }
 
 function applyMove(state: State, from: [number, number], to: [number, number]): State {
-  const next: State = { grid: state.grid.map((row) => row.slice()), turn: state.turn === "w" ? "b" : "w", enPassant: null, halfmoveClock: state.halfmoveClock + 1 };
+  const next: State = { grid: state.grid.map((row) => row.slice()), turn: state.turn === "w" ? "b" : "w", enPassant: null, halfmoveClock: state.halfmoveClock + 1, positionHistory: state.positionHistory };
   const [fr, fc] = from, [tr, tc] = to;
   const piece = next.grid[fr][fc];
   if (!piece) return next;
@@ -294,7 +319,11 @@ export const ChessBoard: React.FC<GameComponentProps> = (props) => {
 
 const ChessLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
   const startedAt = useMemo(() => Date.now(), []);
-  const [state, setState] = useState<State>(() => ({ grid: startGrid(), turn: "w", enPassant: null, halfmoveClock: 0 }));
+  const [state, setState] = useState<State>(() => {
+    const init: State = { grid: startGrid(), turn: "w", enPassant: null, halfmoveClock: 0, positionHistory: [] };
+    init.positionHistory = [positionKey(init)];
+    return init;
+  });
   const [selected, setSelected] = useState<[number, number] | null>(null);
   useScrollToTop(state.turn);
 
@@ -313,17 +342,20 @@ const ChessLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, on
   const hasMoves = anyLegalMoves(state);
   const fiftyMoveDraw = state.halfmoveClock >= 100;
   const insufficientMaterialDraw = isInsufficientMaterial(state);
-  const over = !hasMoves || fiftyMoveDraw || insufficientMaterialDraw;
-  // Winner index is only set on checkmate. Stalemate / 50-move /
-  // insufficient material all resolve to no winner (draw, all-share).
+  const currentPositionKey = positionKey(state);
+  const threefold = state.positionHistory.filter((k) => k === currentPositionKey).length >= 3;
+  const over = !hasMoves || fiftyMoveDraw || insufficientMaterialDraw || threefold;
+  // Winner index is only set on checkmate. All other over-states are draws.
   const winnerIdx = over && !hasMoves && inCheck ? (state.turn === "w" ? 1 : 0) : -1;
-  const endReason: "checkmate" | "stalemate" | "fifty-move" | "insufficient-material" | null = !over
+  const endReason: "checkmate" | "stalemate" | "fifty-move" | "insufficient-material" | "threefold-repetition" | null = !over
     ? null
     : !hasMoves
       ? inCheck ? "checkmate" : "stalemate"
       : fiftyMoveDraw
         ? "fifty-move"
-        : "insufficient-material";
+        : threefold
+          ? "threefold-repetition"
+          : "insufficient-material";
 
   const targets: Set<string> = new Set(
     selected ? legalMoves(state, selected[0], selected[1]).map(([r, c]) => `${r},${c}`) : [],
@@ -334,6 +366,8 @@ const ChessLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, on
     const key = `${r},${c}`;
     if (selected && targets.has(key)) {
       const next = applyMove(state, selected, [r, c]);
+      // Record the new position for threefold detection.
+      next.positionHistory = [...next.positionHistory, positionKey(next)];
       setState(next);
       setSelected(null);
       return;
@@ -349,6 +383,7 @@ const ChessLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, on
       case "stalemate": return "Stalemate";
       case "fifty-move": return "Draw · 50-move";
       case "insufficient-material": return "Draw · insufficient material";
+      case "threefold-repetition": return "Draw · threefold";
       default: return "";
     }
   })();

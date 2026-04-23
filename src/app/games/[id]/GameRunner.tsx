@@ -37,7 +37,15 @@ type Flow =
 
 // Envelope types — opaque to the game.
 interface LobbyState { phase: "lobby" }
-interface PlayingState { phase: "playing"; game: unknown }
+interface PlayingState {
+  phase: "playing";
+  game: unknown;
+  /** Peers that were in the room when the host tapped "start".
+   *  Anyone connecting after that shows up in room.snap.players but
+   *  not here, so the runner can render them as spectators instead of
+   *  letting them land on a half-broken game UI. */
+  playersAtStart: string[];
+}
 type EnvelopeState = LobbyState | PlayingState;
 
 interface StartAction { __kind: "start" }
@@ -56,13 +64,17 @@ function makeEnvelopeReducer(config: RemoteGameConfig | undefined) {
       if (!sender?.isHost) return state;
       if (state.phase !== "lobby") return state;
       const init = config?.initialState(players.map((p) => ({ peerId: p.peerId, name: p.name })));
-      return { phase: "playing", game: init };
+      return {
+        phase: "playing",
+        game: init,
+        playersAtStart: players.map((p) => p.peerId),
+      };
     }
     if (action.__kind === "game") {
       if (state.phase !== "playing") return state;
       if (!config) return state;
       const nextGame = config.reducer(state.game, action.action, senderPeerId, players);
-      return { phase: "playing", game: nextGame };
+      return { ...state, game: nextGame };
     }
     return state;
   };
@@ -246,13 +258,47 @@ export function GameRunner({ gameId }: { gameId: string }) {
     }
 
     // phase === "playing": hand game state + dispatch to the game Component.
+    const playingState = snap.state as PlayingState;
+    const playersAtStart = playingState.playersAtStart ?? [];
+
+    // Late-joiner guard. If I connected after the host started, my
+    // peerId isn't in playersAtStart — and most game reducers assume
+    // every action sender is a seated player. Render a universal
+    // "spectator" view instead of handing control to the game Component
+    // (which would show a partial / broken UI for a non-player).
+    const iAmSeated = playersAtStart.length === 0 || playersAtStart.includes(snap.me.peerId);
+    if (!iAmSeated) {
+      return (
+        <div className="mx-auto max-w-md animate-fade-up pt-10 text-center">
+          <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-[hsl(var(--ember))]">
+            § Spectator · {game.name}
+          </p>
+          <h2 className="mt-4 font-display text-4xl italic">You arrived mid-round.</h2>
+          <p className="mx-auto mt-4 max-w-sm text-sm leading-relaxed text-muted">
+            The table is already playing. Watch if you like — when they
+            start the next round, you&apos;ll be dealt in automatically.
+          </p>
+          <p className="mt-6 font-mono text-[10px] uppercase tracking-[0.3em] text-muted/70">
+            room code · {snap.code}
+          </p>
+          <button
+            type="button"
+            onClick={handleQuit}
+            className="mt-10 font-mono text-[11px] uppercase tracking-[0.25em] text-muted underline decoration-dotted underline-offset-[6px] hover:text-fg"
+          >
+            Leave room
+          </button>
+        </div>
+      );
+    }
+
     const Component = game.Component;
     const players: Player[] = snap.players.map((p, i) => ({
       id: p.peerId,
       name: p.name,
       color: `hsl(${(i * 67) % 360} 60% 60%)`,
     }));
-    const innerState = (snap.state as PlayingState).game;
+    const innerState = playingState.game;
 
     const remoteCtx: RemoteContext = {
       isHost: snap.me.isHost,
@@ -268,7 +314,7 @@ export function GameRunner({ gameId }: { gameId: string }) {
       setState: (updater) =>
         room.setState((prev) => {
           if (prev.phase !== "playing") return prev;
-          return { phase: "playing", game: updater(prev.game) };
+          return { ...prev, game: updater(prev.game) };
         }),
       dispatch: (action) => room.dispatch({ __kind: "game", action }),
       code: snap.code,

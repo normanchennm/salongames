@@ -33,8 +33,10 @@ type Phase =
   | { kind: "intro" }
   | { kind: "bluff-pass"; round: number; authorIndex: number; prompt: FibPrompt; bluffs: Bluff[]; scores: Scores }
   | { kind: "bluff-input"; round: number; authorIndex: number; prompt: FibPrompt; bluffs: Bluff[]; text: string; scores: Scores }
+  | { kind: "bluff-hidden"; round: number; authorIndex: number; prompt: FibPrompt; bluffs: Bluff[]; scores: Scores }
   | { kind: "vote-pass"; round: number; voterIndex: number; prompt: FibPrompt; options: VoteOption[]; votes: Record<string, string>; scores: Scores }
   | { kind: "vote-input"; round: number; voterIndex: number; prompt: FibPrompt; options: VoteOption[]; votes: Record<string, string>; scores: Scores }
+  | { kind: "vote-hidden"; round: number; voterIndex: number; prompt: FibPrompt; options: VoteOption[]; votes: Record<string, string>; scores: Scores }
   | { kind: "reveal"; round: number; prompt: FibPrompt; options: VoteOption[]; votes: Record<string, string>; scores: Scores; delta: Scores }
   | { kind: "end"; scores: Scores };
 
@@ -236,33 +238,74 @@ const FibbageLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, 
           disabled={!canSubmit}
           onClick={() => {
             const nextBluffs: Bluff[] = [...phase.bluffs, { playerId: author.id, text: phase.text }];
-            const nextAuthor = phase.authorIndex + 1;
-            if (nextAuthor >= players.length) {
-              const options = buildOptions(phase.prompt, nextBluffs);
-              setPhase({
-                kind: "vote-pass",
-                round: phase.round,
-                voterIndex: 0,
-                prompt: phase.prompt,
-                options,
-                votes: {},
-                scores: phase.scores,
-              });
-            } else {
-              setPhase({
+            setPhase({
+              kind: "bluff-hidden",
+              round: phase.round,
+              authorIndex: phase.authorIndex,
+              prompt: phase.prompt,
+              bluffs: nextBluffs,
+              scores: phase.scores,
+            });
+          }}
+          className="mt-4 w-full rounded-md bg-[hsl(var(--ember))] py-3 font-mono text-[11px] uppercase tracking-wider text-bg transition-opacity hover:opacity-90 disabled:opacity-40"
+        >
+          Got it — hide
+        </button>
+      </section>
+    );
+  }
+
+  if (phase.kind === "bluff-hidden") {
+    const nextAuthor = phase.authorIndex + 1;
+    const nextName = nextAuthor < players.length ? players[nextAuthor].name : null;
+    return (
+      <section className="mx-auto max-w-md animate-fade-up text-center">
+        <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-[hsl(var(--ember))]">Bluff hidden</p>
+        {nextName ? (
+          <>
+            <h2 className="mt-4 font-display text-4xl italic">Hand the phone to {nextName}.</h2>
+            <p className="mt-3 text-sm text-muted">
+              Screen is safe. Don&apos;t tap until {nextName} is holding it.
+            </p>
+            <button
+              type="button"
+              onClick={() => setPhase({
                 kind: "bluff-pass",
                 round: phase.round,
                 authorIndex: nextAuthor,
                 prompt: phase.prompt,
-                bluffs: nextBluffs,
+                bluffs: phase.bluffs,
                 scores: phase.scores,
-              });
-            }
-          }}
-          className="mt-4 w-full rounded-md bg-[hsl(var(--ember))] py-3 font-mono text-[11px] uppercase tracking-wider text-bg transition-opacity hover:opacity-90 disabled:opacity-40"
-        >
-          Hide & pass →
-        </button>
+              })}
+              className="mt-10 w-full rounded-md border border-border bg-bg/40 py-3 font-mono text-[11px] uppercase tracking-wider text-muted transition-colors hover:border-[hsl(var(--ember)/0.4)] hover:text-fg"
+            >
+              I&apos;ve handed it to {nextName} →
+            </button>
+          </>
+        ) : (
+          <>
+            <h2 className="mt-4 font-display text-4xl italic">Everyone&apos;s bluffed.</h2>
+            <p className="mt-3 text-sm text-muted">Time to vote.</p>
+            <button
+              type="button"
+              onClick={() => {
+                const options = buildOptions(phase.prompt, phase.bluffs);
+                setPhase({
+                  kind: "vote-pass",
+                  round: phase.round,
+                  voterIndex: 0,
+                  prompt: phase.prompt,
+                  options,
+                  votes: {},
+                  scores: phase.scores,
+                });
+              }}
+              className="mt-10 w-full rounded-md bg-[hsl(var(--ember))] py-3 font-mono text-[11px] uppercase tracking-wider text-bg transition-opacity hover:opacity-90"
+            >
+              Begin voting →
+            </button>
+          </>
+        )}
       </section>
     );
   }
@@ -308,36 +351,15 @@ const FibbageLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, 
               type="button"
               onClick={() => {
                 const nextVotes = { ...phase.votes, [voter.id]: opt.id };
-                const nextVoter = phase.voterIndex + 1;
-                if (nextVoter >= players.length) {
-                  const bluffs: Bluff[] = [];
-                  for (const o of phase.options) {
-                    if (o.isTruth) continue;
-                    for (const authorId of o.authors) bluffs.push({ playerId: authorId, text: o.label });
-                  }
-                  const delta = scoreRound(phase.prompt, bluffs, phase.options, nextVotes, players);
-                  const nextScores: Scores = { ...phase.scores };
-                  for (const p of players) nextScores[p.id] += delta[p.id] ?? 0;
-                  setPhase({
-                    kind: "reveal",
-                    round: phase.round,
-                    prompt: phase.prompt,
-                    options: phase.options,
-                    votes: nextVotes,
-                    scores: nextScores,
-                    delta,
-                  });
-                } else {
-                  setPhase({
-                    kind: "vote-pass",
-                    round: phase.round,
-                    voterIndex: nextVoter,
-                    prompt: phase.prompt,
-                    options: phase.options,
-                    votes: nextVotes,
-                    scores: phase.scores,
-                  });
-                }
+                setPhase({
+                  kind: "vote-hidden",
+                  round: phase.round,
+                  voterIndex: phase.voterIndex,
+                  prompt: phase.prompt,
+                  options: phase.options,
+                  votes: nextVotes,
+                  scores: phase.scores,
+                });
               }}
               className="block w-full rounded-md border border-border bg-bg/40 px-4 py-3 text-left text-sm text-fg transition-colors hover:border-[hsl(var(--ember)/0.6)] hover:bg-[hsl(var(--ember)/0.08)]"
             >
@@ -345,6 +367,69 @@ const FibbageLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, 
             </button>
           ))}
         </div>
+      </section>
+    );
+  }
+
+  if (phase.kind === "vote-hidden") {
+    const nextVoter = phase.voterIndex + 1;
+    const nextName = nextVoter < players.length ? players[nextVoter].name : null;
+    return (
+      <section className="mx-auto max-w-md animate-fade-up text-center">
+        <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-[hsl(var(--ember))]">Vote cast</p>
+        {nextName ? (
+          <>
+            <h2 className="mt-4 font-display text-4xl italic">Hand the phone to {nextName}.</h2>
+            <p className="mt-3 text-sm text-muted">
+              Screen is safe. Don&apos;t tap until {nextName} is holding it.
+            </p>
+            <button
+              type="button"
+              onClick={() => setPhase({
+                kind: "vote-pass",
+                round: phase.round,
+                voterIndex: nextVoter,
+                prompt: phase.prompt,
+                options: phase.options,
+                votes: phase.votes,
+                scores: phase.scores,
+              })}
+              className="mt-10 w-full rounded-md border border-border bg-bg/40 py-3 font-mono text-[11px] uppercase tracking-wider text-muted transition-colors hover:border-[hsl(var(--ember)/0.4)] hover:text-fg"
+            >
+              I&apos;ve handed it to {nextName} →
+            </button>
+          </>
+        ) : (
+          <>
+            <h2 className="mt-4 font-display text-4xl italic">Everyone&apos;s voted.</h2>
+            <p className="mt-3 text-sm text-muted">Tallying the round.</p>
+            <button
+              type="button"
+              onClick={() => {
+                const bluffs: Bluff[] = [];
+                for (const o of phase.options) {
+                  if (o.isTruth) continue;
+                  for (const authorId of o.authors) bluffs.push({ playerId: authorId, text: o.label });
+                }
+                const delta = scoreRound(phase.prompt, bluffs, phase.options, phase.votes, players);
+                const nextScores: Scores = { ...phase.scores };
+                for (const p of players) nextScores[p.id] += delta[p.id] ?? 0;
+                setPhase({
+                  kind: "reveal",
+                  round: phase.round,
+                  prompt: phase.prompt,
+                  options: phase.options,
+                  votes: phase.votes,
+                  scores: nextScores,
+                  delta,
+                });
+              }}
+              className="mt-10 w-full rounded-md bg-[hsl(var(--ember))] py-3 font-mono text-[11px] uppercase tracking-wider text-bg transition-opacity hover:opacity-90"
+            >
+              Reveal the truth →
+            </button>
+          </>
+        )}
       </section>
     );
   }
