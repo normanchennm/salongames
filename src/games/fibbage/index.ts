@@ -14,6 +14,7 @@ const fibbage: Game = {
   description:
     "Each round, the table sees one real trivia question with an answer so weird it sounds fake. Everyone privately writes a bluff. Then bluffs and truth are shuffled and each player votes which is real. +1000 for picking the truth, +500 per player you fool. 5 rounds.",
   Component: FibbageBoard,
+  supportsRemote: true,
 };
 
 export default fibbage;

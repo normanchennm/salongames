@@ -37,6 +37,35 @@ export interface GameComponentProps {
   settings: GameSettings;
   onComplete: (result: Omit<GameResult, "gameId">) => void;
   onQuit: () => void;
+  /** Optional remote-play context. When present, the game is running
+   *  in a WebRTC room — game state must be driven by the room reducer,
+   *  not local setState. When absent (the default), the game runs in
+   *  pass-and-play mode as before. Games that support remote play read
+   *  this prop; games that don't simply ignore it. */
+  remote?: RemoteContext;
+}
+
+/** Minimal shape a game needs to render + act in a remote room. The
+ *  full RoomHandle lives in lib/room and would leak PeerJS types into
+ *  the game contract, so we expose just what the board needs. */
+export interface RemoteContext {
+  /** Am I the host? Host owns game logic (shuffles, deals, state
+   *  transitions); joiners dispatch intents. */
+  isHost: boolean;
+  /** Stable peer id for the local device. Maps 1:1 to a Player.id so
+   *  games can check "is this my turn". */
+  myPeerId: string;
+  /** Live roster, including online/offline status. */
+  remotePlayers: Array<{ peerId: string; name: string; isHost: boolean; online: boolean }>;
+  /** Latest game state from host. null while the host is still
+   *  computing the initial shuffle. */
+  state: unknown;
+  /** Host-only: replace the game state (triggers a broadcast). */
+  setState: (updater: (prev: unknown) => unknown) => void;
+  /** Any peer: send an intent action to the host. */
+  dispatch: (action: unknown) => void;
+  /** Shareable 5-char room code. */
+  code: string;
 }
 
 export interface Game {
@@ -57,4 +86,27 @@ export interface Game {
   /** Adults-only content. Hidden from the main catalog unless the user
    *  enables Dating Mode with an 18+ confirmation. */
   adultOnly?: boolean;
+  /** Game supports remote-room mode (Remote Play). When true, the game
+   *  detail page offers a "Remote room" mode picker alongside the
+   *  default "Same table" pass-and-play. The Component must handle
+   *  the `remote` prop in GameComponentProps when it's provided.
+   *
+   *  Remote state + reducer live in `src/games/remote-registry.ts`
+   *  rather than on the Game object itself so Game stays serializable
+   *  across the server/client boundary (Next's RSCs reject inline
+   *  functions on serialized props). */
+  supportsRemote?: boolean;
+}
+
+/** Host-side state machine for remote play. Lives outside the Game type
+ *  so the catalog / pages / server components can pass Game objects to
+ *  client components without tripping on non-serializable functions. */
+export interface RemoteGameConfig {
+  initialState: (players: Array<{ peerId: string; name: string }>) => unknown;
+  reducer: (
+    state: unknown,
+    action: unknown,
+    senderPeerId: string,
+    players: Array<{ peerId: string; name: string; isHost: boolean; online: boolean }>,
+  ) => unknown;
 }

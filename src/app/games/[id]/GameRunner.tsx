@@ -1,42 +1,117 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { PlayerRoster } from "@/components/PlayerRoster";
 import { GameHero } from "@/components/GameHero";
+import { ModePicker, type PlayMode } from "@/components/ModePicker";
+import { RoomLobby } from "@/components/RoomLobby";
+import { JoinRoomForm } from "@/components/JoinRoomForm";
 import { getGame } from "@/games/registry";
-import type { GameResult, Player } from "@/games/types";
+import { getRemoteConfig } from "@/games/remote-registry";
+import type { GameResult, Player, RemoteContext, RemoteGameConfig } from "@/games/types";
 import { DEFAULT_SETTINGS, appendHistory, loadSettings } from "@/lib/persistence";
 import { track } from "@/lib/telemetry";
+import { useRoom } from "@/lib/useRoom";
 
-/** Client half of the game route. Owns the roster → game flow.
+/** Client half of the game route. Drives the user through the flow:
+ *  game detail → mode picker (if supportsRemote) → roster or lobby →
+ *  gameplay.
  *
- *  `instance` bumps on "play again same roster" so React remounts the
- *  game Component with fresh internal state. Keeping the roster gives
- *  a same-friends rematch without retyping names or re-opening the
- *  roster editor. The game component's own "Play again" button calls
- *  onComplete, we bump instance, component remounts, new game. */
+ *  For remote play, a single room handle spans lobby + gameplay. An
+ *  envelope reducer gates the game's own reducer:
+ *
+ *    envelope state = { phase: "lobby" } | { phase: "playing", game: S }
+ *    envelope action = { __kind: "start" } | { __kind: "game", action: A }
+ *
+ *  This keeps the WebRTC connection alive across the start transition.
+ *  If we tore down + rebuilt the room, we'd race the stable host id
+ *  `room-<code>-host` and accidentally trigger host migration. */
+
+type Flow =
+  | { kind: "detail" }
+  | { kind: "local-roster" }
+  | { kind: "remote-join-form" }
+  | { kind: "remote-room"; mode: "host" | "join"; code?: string; playerName: string }
+  | { kind: "local-playing"; players: Player[] };
+
+// Envelope types — opaque to the game.
+interface LobbyState { phase: "lobby" }
+interface PlayingState { phase: "playing"; game: unknown }
+type EnvelopeState = LobbyState | PlayingState;
+
+interface StartAction { __kind: "start" }
+interface GameAction { __kind: "game"; action: unknown }
+type EnvelopeAction = StartAction | GameAction;
+
+function makeEnvelopeReducer(config: RemoteGameConfig | undefined) {
+  return (
+    state: EnvelopeState,
+    action: EnvelopeAction,
+    senderPeerId: string,
+    players: Array<{ peerId: string; name: string; isHost: boolean; online: boolean }>,
+  ): EnvelopeState => {
+    if (action.__kind === "start") {
+      const sender = players.find((p) => p.peerId === senderPeerId);
+      if (!sender?.isHost) return state;
+      if (state.phase !== "lobby") return state;
+      const init = config?.initialState(players.map((p) => ({ peerId: p.peerId, name: p.name })));
+      return { phase: "playing", game: init };
+    }
+    if (action.__kind === "game") {
+      if (state.phase !== "playing") return state;
+      if (!config) return state;
+      const nextGame = config.reducer(state.game, action.action, senderPeerId, players);
+      return { phase: "playing", game: nextGame };
+    }
+    return state;
+  };
+}
 
 export function GameRunner({ gameId }: { gameId: string }) {
   const game = getGame(gameId)!;
   const router = useRouter();
-  const [players, setPlayers] = useState<Player[] | null>(null);
+  const [flow, setFlow] = useState<Flow>(() => (game.supportsRemote ? { kind: "detail" } : { kind: "local-roster" }));
   const [instance, setInstance] = useState(0);
   const gameStartedAt = useRef<number | null>(null);
   const settings = typeof window === "undefined" ? DEFAULT_SETTINGS : loadSettings();
 
-  // Stamp a start time whenever a fresh instance mounts — used to decide
-  // whether the quit button should confirm. A game under 10 seconds old
-  // is almost certainly "accidentally opened"; anything older deserves a
-  // confirm to prevent losing real progress.
+  // Keep the envelope reducer identity stable per-game so useRoom's
+  // effect doesn't churn.
+  const remoteConfig = useMemo(() => getRemoteConfig(game.id), [game.id]);
+  const reducer = useMemo(() => makeEnvelopeReducer(remoteConfig), [remoteConfig]);
+
+  const roomMode = flow.kind === "remote-room" ? flow.mode : null;
+  const roomCode = flow.kind === "remote-room" && flow.mode === "join" ? flow.code : undefined;
+  const roomName = flow.kind === "remote-room" ? flow.playerName : "";
+
+  const room = useRoom<EnvelopeState, EnvelopeAction>({
+    mode: roomMode,
+    code: roomCode,
+    playerName: roomName,
+    gameId,
+    initialState: { phase: "lobby" },
+    reducer,
+  });
+
   useEffect(() => {
-    if (players) {
+    if (flow.kind === "local-playing") {
       gameStartedAt.current = Date.now();
-      track("game_started", { gameId, players: players.length, replay: instance });
-    } else {
+      track("game_started", { gameId, players: flow.players.length, replay: instance, remote: false });
+    } else if (flow.kind === "remote-room" && room.snap?.state?.phase === "playing") {
+      if (gameStartedAt.current === null) {
+        gameStartedAt.current = Date.now();
+        track("game_started", {
+          gameId,
+          players: room.snap.players.length,
+          replay: instance,
+          remote: true,
+        });
+      }
+    } else if (flow.kind === "detail") {
       track("game_opened", { gameId });
     }
-  }, [players, instance, gameId]);
+  }, [flow, gameId, instance, room.snap]);
 
   const handleQuit = () => {
     const elapsed = gameStartedAt.current ? Date.now() - gameStartedAt.current : 0;
@@ -46,10 +121,21 @@ export function GameRunner({ gameId }: { gameId: string }) {
       if (!ok) return;
     }
     track("game_quit", { gameId, elapsedSec: Math.round(elapsed / 1000) });
+    if (flow.kind === "remote-room") room.leave();
     router.push("/");
   };
 
-  if (!players) {
+  const handlePickMode = (mode: PlayMode) => {
+    if (mode === "local") setFlow({ kind: "local-roster" });
+    else if (mode === "remote-host") {
+      setFlow({ kind: "remote-room", mode: "host", playerName: promptName() ?? "Host" });
+    } else {
+      setFlow({ kind: "remote-join-form" });
+    }
+  };
+
+  // --- DETAIL / MODE PICKER -----------------------------------------
+  if (flow.kind === "detail") {
     return (
       <div>
         <GameHero game={game} />
@@ -60,33 +146,172 @@ export function GameRunner({ gameId }: { gameId: string }) {
           <h1 className="mt-2 font-display text-5xl italic text-fg">{game.name}</h1>
           <p className="mt-3 max-w-xl text-muted">{game.description}</p>
         </header>
+        <ModePicker onPick={handlePickMode} />
+      </div>
+    );
+  }
+
+  // --- LOCAL: classic roster → gameplay ----------------------------
+  if (flow.kind === "local-roster") {
+    return (
+      <div>
+        {!game.supportsRemote && <GameHero game={game} />}
+        {!game.supportsRemote && (
+          <header className="mb-10 mt-6">
+            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-[hsl(var(--ember))]">
+              {game.category.replace("-", " ")}
+            </p>
+            <h1 className="mt-2 font-display text-5xl italic text-fg">{game.name}</h1>
+            <p className="mt-3 max-w-xl text-muted">{game.description}</p>
+          </header>
+        )}
+        {game.supportsRemote && (
+          <button
+            type="button"
+            onClick={() => setFlow({ kind: "detail" })}
+            className="mb-4 font-mono text-[11px] uppercase tracking-[0.2em] text-muted hover:text-fg"
+          >
+            ← change mode
+          </button>
+        )}
         <PlayerRoster
           minPlayers={game.minPlayers}
           maxPlayers={game.maxPlayers}
-          onReady={setPlayers}
+          onReady={(players) => setFlow({ kind: "local-playing", players })}
         />
       </div>
     );
   }
 
+  // --- REMOTE: join form --------------------------------------------
+  if (flow.kind === "remote-join-form") {
+    return (
+      <JoinRoomForm
+        gameName={game.name}
+        onSubmit={(name, code) => setFlow({ kind: "remote-room", mode: "join", code, playerName: name })}
+        onCancel={() => setFlow({ kind: "detail" })}
+      />
+    );
+  }
+
+  // --- REMOTE: room (lobby + gameplay, same handle) -----------------
+  if (flow.kind === "remote-room") {
+    const snap = room.snap;
+    const phase = snap?.state?.phase ?? "lobby";
+
+    // Still connecting, or state hasn't arrived from host yet.
+    if (!snap) {
+      return (
+        <section className="mx-auto max-w-md pt-20 text-center">
+          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted">Connecting…</p>
+        </section>
+      );
+    }
+
+    if (phase === "lobby") {
+      const startGame = () => room.dispatch({ __kind: "start" });
+      return (
+        <RoomLobby
+          snap={snap}
+          minPlayers={game.minPlayers}
+          maxPlayers={game.maxPlayers}
+          gameName={game.name}
+          onStart={startGame}
+          onLeave={() => {
+            room.leave();
+            gameStartedAt.current = null;
+            setFlow({ kind: "detail" });
+          }}
+        />
+      );
+    }
+
+    // phase === "playing": hand game state + dispatch to the game Component.
+    const Component = game.Component;
+    const players: Player[] = snap.players.map((p, i) => ({
+      id: p.peerId,
+      name: p.name,
+      color: `hsl(${(i * 67) % 360} 60% 60%)`,
+    }));
+    const innerState = (snap.state as PlayingState).game;
+
+    const remoteCtx: RemoteContext = {
+      isHost: snap.me.isHost,
+      myPeerId: snap.me.peerId,
+      remotePlayers: snap.players.map((p) => ({
+        peerId: p.peerId,
+        name: p.name,
+        isHost: p.isHost,
+        online: p.online,
+      })),
+      state: innerState,
+      // Host-only helper for direct state writes (rare — most games use dispatch).
+      setState: (updater) =>
+        room.setState((prev) => {
+          if (prev.phase !== "playing") return prev;
+          return { phase: "playing", game: updater(prev.game) };
+        }),
+      dispatch: (action) => room.dispatch({ __kind: "game", action }),
+      code: snap.code,
+    };
+
+    return (
+      <Component
+        key={instance}
+        players={players}
+        settings={settings}
+        onComplete={(partial) => {
+          const result: GameResult = { gameId: game.id, ...partial };
+          appendHistory(result);
+          track("game_completed", {
+            gameId: game.id,
+            players: players.length,
+            durationSec: partial.durationSec,
+            winners: partial.winnerIds.length,
+            remote: true,
+          });
+          // Reset instance so replay inside the same room resets state.
+          setInstance((i) => i + 1);
+        }}
+        onQuit={handleQuit}
+        remote={remoteCtx}
+      />
+    );
+  }
+
+  // --- LOCAL PLAYING -------------------------------------------------
   const Component = game.Component;
   return (
     <Component
       key={instance}
-      players={players}
+      players={flow.players}
       settings={settings}
       onComplete={(partial) => {
         const result: GameResult = { gameId: game.id, ...partial };
         appendHistory(result);
         track("game_completed", {
           gameId: game.id,
-          players: players.length,
+          players: flow.players.length,
           durationSec: partial.durationSec,
           winners: partial.winnerIds.length,
+          remote: false,
         });
         setInstance((i) => i + 1);
       }}
       onQuit={handleQuit}
     />
   );
+}
+
+function promptName(): string | null {
+  if (typeof window === "undefined") return "Host";
+  const cached = window.localStorage.getItem("salongames:lastPlayerName:v1") ?? "";
+  const name = window.prompt("Your name?", cached);
+  if (name && name.trim()) {
+    try {
+      window.localStorage.setItem("salongames:lastPlayerName:v1", name.trim());
+    } catch {}
+    return name.trim();
+  }
+  return null;
 }

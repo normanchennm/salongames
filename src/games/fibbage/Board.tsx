@@ -5,21 +5,13 @@ import type { GameComponentProps, Player } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
 import { type FibPrompt, pickPrompts } from "./prompts";
 import { playCue, FIBBAGE_CUES } from "@/lib/narrator";
+import { FibbageRemoteBoard } from "./RemoteBoard";
 
 /** Fibbage — pass-and-play bluffing trivia.
  *
- *  Each round: one real trivia question. Every player privately writes
- *  a fake answer. All bluffs + the truth are shuffled and presented to
- *  each player in turn. Players vote which one they think is real.
- *
- *  You can't vote for your own bluff. Two players writing the same
- *  bluff share the fool credit. If someone accidentally writes the
- *  real answer (or a listed alias), they get the +1000 truth bonus
- *  but their option is folded into the truth slot.
- *
- *  Scoring (classic Fibbage):
- *   - +1000 for voting the truth
- *   - +500 per player fooled by your bluff  */
+ *  When given a `remote` prop, delegates to FibbageRemoteBoard which
+ *  drives the game off the authoritative host's reducer. Otherwise
+ *  runs the classic pass-and-play flow in local state. */
 
 const ROUNDS = 5;
 
@@ -31,10 +23,10 @@ interface Bluff {
 }
 
 interface VoteOption {
-  id: string;             // stable key: "truth" or "bluff:<playerId>" or "bluff-shared:<joined>"
+  id: string;
   label: string;
   isTruth: boolean;
-  authors: string[];      // player ids who wrote this text (for scoring)
+  authors: string[];
 }
 
 type Phase =
@@ -58,12 +50,11 @@ function normalizeBluff(text: string): string {
 }
 
 function buildOptions(prompt: FibPrompt, bluffs: Bluff[]): VoteOption[] {
-  // Group identical bluffs so co-authors share the fool credit.
   const groups = new Map<string, { label: string; authors: string[] }>();
   for (const b of bluffs) {
     const key = normalizeBluff(b.text);
     if (!key) continue;
-    if (isTruthy(prompt, b.text)) continue; // truth collisions are awarded via scoring, not shown as a bluff
+    if (isTruthy(prompt, b.text)) continue;
     const prev = groups.get(key);
     if (prev) {
       prev.authors.push(b.playerId);
@@ -94,31 +85,34 @@ function scoreRound(
   players: Player[],
 ): Scores {
   const delta: Scores = Object.fromEntries(players.map((p) => [p.id, 0]));
-  // Truth bonus: +1000 if you accidentally wrote the truth OR you voted for the truth.
   const truthOption = options.find((o) => o.isTruth);
   for (const p of players) {
     const myBluff = bluffs.find((b) => b.playerId === p.id);
     if (myBluff && isTruthy(prompt, myBluff.text)) {
       delta[p.id] += 1000;
-      continue; // truth-writers don't get fool points (their bluff wasn't in the pool)
+      continue;
     }
     if (truthOption && votes[p.id] === truthOption.id) {
       delta[p.id] += 1000;
     }
   }
-  // Fool points: each voter who picked a bluff gives +500 to each author of that bluff.
   for (const [voterId, pickedId] of Object.entries(votes)) {
     const picked = options.find((o) => o.id === pickedId);
     if (!picked || picked.isTruth) continue;
     for (const authorId of picked.authors) {
-      if (authorId === voterId) continue; // (shouldn't happen — voters can't pick own)
+      if (authorId === voterId) continue;
       delta[authorId] = (delta[authorId] ?? 0) + 500;
     }
   }
   return delta;
 }
 
-export const FibbageBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
+export const FibbageBoard: React.FC<GameComponentProps> = (props) => {
+  if (props.remote) return <FibbageRemoteBoard {...props} remote={props.remote} />;
+  return <FibbageLocalBoard {...props} />;
+};
+
+const FibbageLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
   const startedAt = useMemo(() => Date.now(), []);
   const prompts = useMemo(() => pickPrompts(ROUNDS), []);
   const [phase, setPhase] = useState<Phase>({ kind: "intro" });
@@ -158,7 +152,6 @@ export const FibbageBoard: React.FC<GameComponentProps> = ({ players, onComplete
     });
   }
 
-  // --- INTRO ----------------------------------------------------
   if (phase.kind === "intro") {
     return (
       <section className="mx-auto max-w-md animate-fade-up text-center">
@@ -193,7 +186,6 @@ export const FibbageBoard: React.FC<GameComponentProps> = ({ players, onComplete
     );
   }
 
-  // --- BLUFF PASS (hand-off screen before typing) ---------------
   if (phase.kind === "bluff-pass") {
     const author = players[phase.authorIndex];
     return (
@@ -216,7 +208,6 @@ export const FibbageBoard: React.FC<GameComponentProps> = ({ players, onComplete
     );
   }
 
-  // --- BLUFF INPUT -----------------------------------------------
   if (phase.kind === "bluff-input") {
     const author = players[phase.authorIndex];
     const canSubmit = phase.text.trim().length > 0;
@@ -247,7 +238,6 @@ export const FibbageBoard: React.FC<GameComponentProps> = ({ players, onComplete
             const nextBluffs: Bluff[] = [...phase.bluffs, { playerId: author.id, text: phase.text }];
             const nextAuthor = phase.authorIndex + 1;
             if (nextAuthor >= players.length) {
-              // All bluffs in → build vote pool.
               const options = buildOptions(phase.prompt, nextBluffs);
               setPhase({
                 kind: "vote-pass",
@@ -277,7 +267,6 @@ export const FibbageBoard: React.FC<GameComponentProps> = ({ players, onComplete
     );
   }
 
-  // --- VOTE PASS -------------------------------------------------
   if (phase.kind === "vote-pass") {
     const voter = players[phase.voterIndex];
     return (
@@ -300,10 +289,8 @@ export const FibbageBoard: React.FC<GameComponentProps> = ({ players, onComplete
     );
   }
 
-  // --- VOTE INPUT ------------------------------------------------
   if (phase.kind === "vote-input") {
     const voter = players[phase.voterIndex];
-    // Filter out options the voter themselves authored.
     const eligible = phase.options.filter((o) => !o.authors.includes(voter.id));
     return (
       <section className="mx-auto max-w-md animate-fade-up">
@@ -323,8 +310,6 @@ export const FibbageBoard: React.FC<GameComponentProps> = ({ players, onComplete
                 const nextVotes = { ...phase.votes, [voter.id]: opt.id };
                 const nextVoter = phase.voterIndex + 1;
                 if (nextVoter >= players.length) {
-                  // All votes in → score this round.
-                  // Rebuild bluffs list from options' authors to reuse scoreRound.
                   const bluffs: Bluff[] = [];
                   for (const o of phase.options) {
                     if (o.isTruth) continue;
@@ -364,7 +349,6 @@ export const FibbageBoard: React.FC<GameComponentProps> = ({ players, onComplete
     );
   }
 
-  // --- REVEAL ----------------------------------------------------
   if (phase.kind === "reveal") {
     const sorted = Object.entries(phase.scores).sort(([, a], [, b]) => b - a);
     const isLast = phase.round + 1 >= ROUNDS;
@@ -456,7 +440,6 @@ export const FibbageBoard: React.FC<GameComponentProps> = ({ players, onComplete
     );
   }
 
-  // --- END -------------------------------------------------------
   const sorted = Object.entries(phase.scores).sort(([, a], [, b]) => b - a);
   const max = sorted[0]?.[1] ?? 0;
   const winnerName = sorted[0] ? players.find((p) => p.id === sorted[0][0])?.name : undefined;
