@@ -5,7 +5,14 @@
     ".mp3": "audio/mpeg"
   },
   "globalHeaders": {
-    "Cache-Control": "public, max-age=0, must-revalidate"
+    "Cache-Control": "public, max-age=0, must-revalidate",
+    "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=()",
+    "X-Robots-Tag": "noai, noimageai",
+    "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; media-src 'self'; connect-src 'self' https://salongames-peer-b1.azurewebsites.net wss://salongames-peer-b1.azurewebsites.net https://dc.services.visualstudio.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
   },
   "routes": [
     {

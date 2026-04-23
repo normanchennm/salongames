@@ -1,0 +1,154 @@
+# salongames — pass-and-play party games for friends at a table
+# https://salongames.me
+#
+# Normal search + social-preview crawlers: welcome (the catalog is
+# public by design, discoverability is a feature). Admin + API routes
+# kept out.
+#
+# AI training + content-scraping crawlers: denied. The catalog, the
+# narrator lines, the cover art, and the game prompts are hand-
+# authored. They aren't training material — they're the product.
+
+# --- AI training + LLM crawlers — fully disallowed ---
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: OAI-SearchBot
+Disallow: /
+
+User-agent: ClaudeBot
+Disallow: /
+
+User-agent: Claude-User
+Disallow: /
+
+User-agent: Claude-SearchBot
+Disallow: /
+
+User-agent: anthropic-ai
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: GoogleOther
+Disallow: /
+
+User-agent: PerplexityBot
+Disallow: /
+
+User-agent: Perplexity-User
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: FacebookBot
+Disallow: /
+
+User-agent: Meta-ExternalAgent
+Disallow: /
+
+User-agent: Meta-ExternalFetcher
+Disallow: /
+
+User-agent: Applebot-Extended
+Disallow: /
+
+User-agent: Amazonbot
+Disallow: /
+
+User-agent: Cohere-ai
+Disallow: /
+
+User-agent: cohere-training-data-crawler
+Disallow: /
+
+User-agent: Diffbot
+Disallow: /
+
+User-agent: ImagesiftBot
+Disallow: /
+
+User-agent: Omgilibot
+Disallow: /
+
+User-agent: omgili
+Disallow: /
+
+User-agent: Scrapy
+Disallow: /
+
+User-agent: YouBot
+Disallow: /
+
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DataForSeoBot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+# --- Social-preview crawlers — explicitly allowed ---
+# These are the bots Facebook/Instagram/Threads/Twitter/etc. use to
+# fetch Open Graph tags when someone shares a link. Being explicit
+# here (rather than relying on the wildcard below) satisfies their
+# sharing-debugger checks that sometimes flag a missing robots.txt
+# as "could be a block" even when the absence means "allowed."
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Facebot
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+User-agent: Slackbot
+Allow: /
+
+User-agent: Slackbot-LinkExpanding
+Allow: /
+
+User-agent: Discordbot
+Allow: /
+
+User-agent: WhatsApp
+Allow: /
+
+User-agent: TelegramBot
+Allow: /
+
+User-agent: Pinterestbot
+Allow: /
+
+User-agent: redditbot
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+# --- Default: general search crawlers, admin/API kept out ---
+User-agent: *
+Disallow: /admin/
+Disallow: /api/
+Allow: /
+
+Sitemap: https://salongames.me/sitemap.xml
