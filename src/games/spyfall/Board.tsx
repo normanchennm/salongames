@@ -93,6 +93,10 @@ export const SpyfallBoard: React.FC<GameComponentProps> = ({ players, onComplete
     const nextName = nextIdx < assignments.length ? assignments[nextIdx].name : null;
     return (
       <RevealCard
+        // Key per player so RevealCard's internal stage resets between
+        // reveals — otherwise player 2 inherits the "post" screen from
+        // player 1 and skips their own spy/location reveal.
+        key={current.id}
         assignment={current}
         location={location}
         nextPlayerName={nextName}

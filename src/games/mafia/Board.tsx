@@ -107,6 +107,11 @@ const MafiaLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, on
     const nextName = nextIdx < state.players.length ? state.players[nextIdx].name : null;
     return (
       <RevealCard
+        // `key` forces React to remount RevealCard per player so its
+        // internal `stage` ("pre" → "shown" → "post") resets fresh.
+        // Without this, player 2 sees the stale "post" screen from
+        // player 1 and skips the reveal entirely.
+        key={current.id}
         playerName={current.name}
         roleName={role.name}
         roleId={current.role}

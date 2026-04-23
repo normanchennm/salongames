@@ -90,6 +90,10 @@ const AvalonLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, o
     const nextName = nextIdx < assigned.length ? assigned[nextIdx].name : null;
     return (
       <RevealCard
+        // Key per player so RevealCard's internal stage state resets
+        // between reveals — otherwise player 2 inherits the "post"
+        // screen from player 1 and skips their own reveal.
+        key={current.id}
         player={current}
         role={role}
         evilTeam={

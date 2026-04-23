@@ -109,6 +109,10 @@ const WerewolfLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete,
     const nextName = nextIdx < state.players.length ? state.players[nextIdx].name : null;
     return (
       <RevealCard
+        // Key per player so RevealCard's internal stage state resets
+        // between reveals. Without this the second player sees the
+        // post-reveal screen directly and skips their own role.
+        key={current.id}
         playerName={current.name}
         roleName={role.name}
         roleId={current.role}
