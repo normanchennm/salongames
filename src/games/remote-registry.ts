@@ -23,6 +23,7 @@ import { onRemoteInitialState, onRemoteReducer } from "./onenightww/remote";
 import { heartsRemoteInitialState, heartsRemoteReducer } from "./hearts/remote";
 import { spadesRemoteInitialState, spadesRemoteReducer } from "./spades/remote";
 import { rummyRemoteInitialState, rummyRemoteReducer } from "./rummy/remote";
+import { coupRemoteInitialState, coupRemoteReducer } from "./coup/remote";
 
 export const REMOTE_CONFIGS: Record<string, RemoteGameConfig> = {
   fibbage: { initialState: fibRemoteInitialState, reducer: fibRemoteReducer as RemoteGameConfig["reducer"] },
@@ -40,6 +41,7 @@ export const REMOTE_CONFIGS: Record<string, RemoteGameConfig> = {
   hearts: { initialState: heartsRemoteInitialState, reducer: heartsRemoteReducer as RemoteGameConfig["reducer"] },
   spades: { initialState: spadesRemoteInitialState, reducer: spadesRemoteReducer as RemoteGameConfig["reducer"] },
   rummy: { initialState: rummyRemoteInitialState, reducer: rummyRemoteReducer as RemoteGameConfig["reducer"] },
+  coup: { initialState: coupRemoteInitialState, reducer: coupRemoteReducer as RemoteGameConfig["reducer"] },
 };
 
 export function getRemoteConfig(gameId: string): RemoteGameConfig | undefined {

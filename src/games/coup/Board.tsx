@@ -5,6 +5,7 @@ import type { GameComponentProps } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
 import { RoleArt } from "@/components/RoleArt";
 import { playCue, COUP_CUES } from "@/lib/narrator";
+import { CoupRemoteBoard } from "./RemoteBoard";
 
 /** Coup — 2-6p bluffing card game with hidden characters.
  *
@@ -83,7 +84,12 @@ type Phase =
   | { kind: "exchange-pick"; drawn: [Char, Char] }
   | { kind: "end"; winnerId: string };
 
-export const CoupBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
+export const CoupBoard: React.FC<GameComponentProps> = (props) => {
+  if (props.remote) return <CoupRemoteBoard {...props} remote={props.remote} />;
+  return <CoupLocalBoard {...props} />;
+};
+
+const CoupLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQuit }) => {
   const startedAt = useMemo(() => Date.now(), []);
   const [core, setCore] = useState<GameCore>(() => {
     const deck = initialDeck();
