@@ -4,6 +4,7 @@ import { Wordmark } from "@/components/Wordmark";
 import { MuteToggle } from "@/components/MuteToggle";
 import { RegisterSW } from "@/components/RegisterSW";
 import { FeedbackButton } from "@/components/FeedbackButton";
+import { NarratorPrimer } from "@/components/NarratorPrimer";
 import "./globals.css";
 
 // Fraunces for the editorial "salon" half of the wordmark + display copy.
@@ -63,6 +64,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${fraunces.variable} ${geistMono.variable}`}>
       <body className="min-h-screen bg-bg text-fg">
         <RegisterSW />
+        <NarratorPrimer />
         <header className="border-b border-border/70">
           <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-4 sm:px-6 sm:py-5">
             {/* Two wordmarks so the mobile header doesn't crowd —
