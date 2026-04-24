@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 /** Mode picker shown on the game detail page when a game supports
  *  remote play. Multi-device is primary — it gets the large card with
  *  the faux-code metaphor. Join-with-a-code rides underneath at half
@@ -28,9 +30,14 @@ export function ModePicker({
    *  game's hidden-info mechanics work best with a human narrator. */
   localAwkward?: boolean;
 }) {
-  // Pick a sample once per mount — stable across re-renders within the
-  // same detail view, different each time you visit a game page.
-  const sample = CODE_SAMPLES[Math.floor(Math.random() * CODE_SAMPLES.length)];
+  // Start with a deterministic sample so SSR + client hydration render
+  // identical markup (avoids a hydration-mismatch warning on every game
+  // detail page). Pick the random-per-visit sample client-side only,
+  // after hydration settles.
+  const [sample, setSample] = useState(CODE_SAMPLES[0]);
+  useEffect(() => {
+    setSample(CODE_SAMPLES[Math.floor(Math.random() * CODE_SAMPLES.length)]);
+  }, []);
 
   return (
     <div className="animate-fade-up">
