@@ -28,9 +28,50 @@ export function setMuted(muted: boolean): void {
   window.localStorage.setItem(MUTE_KEY, muted ? "1" : "0");
 }
 
-// Single shared audio element — avoids overlap if a phase change fires
-// while the previous cue is still playing.
-let current: HTMLAudioElement | null = null;
+// Single shared audio element. REUSED across cues (swapping .src +
+// load()) rather than recreated with new Audio() each time. iOS
+// Safari — and strict Chrome autoplay policies — only trust audio
+// elements that were "primed" by a user gesture. A newly-constructed
+// Audio() has no gesture history, so its .play() rejects even if the
+// user just tapped. By priming one element on the first call (inside
+// the user's gesture), every subsequent cue in the same session can
+// play without re-gesturing. This is why mid-night narrator cues in
+// ONWW were silently dropping on mobile after the first one played.
+type PrimedAudio = HTMLAudioElement & {
+  __salonHandlers?: { onEnded: () => void; onError: () => void };
+};
+
+let current: PrimedAudio | null = null;
+
+function getSharedAudio(): PrimedAudio {
+  if (!current) {
+    const a = new Audio() as PrimedAudio;
+    a.preload = "auto";
+    (a as PrimedAudio & { playsInline?: boolean }).playsInline = true;
+    current = a;
+  }
+  return current;
+}
+
+/** Some interactive flows (ONWW night phase) trigger the first cue
+ *  from inside a user tap handler. Calling this from a `click`
+ *  handler before any autoplay attempt warms the shared Audio
+ *  element with the user's gesture so later auto-advanced cues can
+ *  play without a fresh tap. No-op if already primed.
+ *
+ *  Safe to call multiple times — only the first call during the
+ *  session's gesture actually matters. */
+export function primeNarrator(): void {
+  if (typeof window === "undefined") return;
+  const audio = getSharedAudio();
+  try {
+    // A silent ~0-byte data URI lets us invoke play() inside the
+    // gesture. Once play() resolves (or rejects), the element
+    // counts as user-activated for future plays.
+    audio.src = "data:audio/mpeg;base64,//uQxAAAAAAAAAAAAAAAAAAAAAAAAA==";
+    void audio.play().then(() => audio.pause()).catch(() => {});
+  } catch { /* ignore */ }
+}
 
 export interface PlayCueOpts {
   /** Fires once when playback finishes normally, errors out, or when
@@ -43,26 +84,46 @@ export function playCue(path: string, opts?: PlayCueOpts): Promise<void> {
   const fire = () => opts?.onEnded?.();
   if (typeof window === "undefined") { fire(); return Promise.resolve(); }
   if (isMuted()) { fire(); return Promise.resolve(); }
-  // Stop any in-flight cue first. Overlapping narration reads as a bug.
-  if (current) {
-    try {
-      current.pause();
-      current.currentTime = 0;
-    } catch {}
+
+  const audio = getSharedAudio();
+
+  // Remove any previous cue's handlers before we swap src, otherwise
+  // the next "ended" from the previous cue's listeners would fire on
+  // this one too.
+  if (audio.__salonHandlers) {
+    audio.removeEventListener("ended", audio.__salonHandlers.onEnded);
+    audio.removeEventListener("error", audio.__salonHandlers.onError);
+    audio.__salonHandlers = undefined;
   }
-  const audio = new Audio(path);
-  current = audio;
+
+  // Stop any in-flight cue before swapping src so we don't hear the
+  // tail of the previous cue bleed into the next.
+  try {
+    if (!audio.paused) audio.pause();
+    audio.currentTime = 0;
+  } catch { /* ignore */ }
+
   let fired = false;
   const once = () => { if (fired) return; fired = true; fire(); };
+
   if (opts?.onEnded) {
-    audio.addEventListener("ended", once, { once: true });
-    audio.addEventListener("error", once, { once: true });
+    const onEnded = () => once();
+    const onError = () => once();
+    audio.addEventListener("ended", onEnded, { once: true });
+    audio.addEventListener("error", onError, { once: true });
+    audio.__salonHandlers = { onEnded, onError };
   }
+
+  audio.src = path;
+  // load() re-fetches the src after assignment — needed since we're
+  // reusing the element and play() without load() sometimes replays
+  // the previous clip on iOS.
+  try { audio.load(); } catch { /* ignore */ }
+
   return audio.play().catch(() => {
     // Autoplay blocked or file missing — fall through to onEnded so
-    // auto-advance flows don't stall. Mobile Safari blocks audio until
-    // a user gesture; the lobby's "Deal roles" tap counts, so this
-    // rarely fires once the game is under way.
+    // auto-advance flows don't stall. The minMs floor in callers keeps
+    // the on-screen prompt visible even if audio itself silently fails.
     once();
   });
 }

@@ -5,7 +5,7 @@ import type { GameComponentProps, Player } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
 import { RoleArt } from "@/components/RoleArt";
 import { EndScreenArt } from "@/components/EndScreenArt";
-import { playCue, ONENIGHT_CUES } from "@/lib/narrator";
+import { playCue, primeNarrator, ONENIGHT_CUES } from "@/lib/narrator";
 import { OneNightWWRemoteBoard } from "./RemoteBoard";
 
 /** One Night Ultimate Werewolf — single-night, no elimination until
@@ -137,13 +137,26 @@ const OneNightWWLocalBoard: React.FC<GameComponentProps> = ({ players, onComplet
     let cancelled = false;
 
     // Play a cue; when it ends (or after `fallbackMs`), run `advance`.
-    // Belt-and-suspenders: narration finishing drives the happy path;
-    // the timer handles muted / missing-MP3 / autoplay-blocked cases.
-    const afterCue = (cue: string, advance: () => void, fallbackMs = 8000) => {
+    // Three-way guard:
+    //   - Happy path: audio ends naturally → advance.
+    //   - Fallback: if audio never fires "ended" (network stall, rare),
+    //     `fallbackMs` forces an advance.
+    //   - Minimum floor: the screen is held for at least `minMs` even
+    //     if `onEnded` fires synchronously. Without this, a muted user
+    //     (or autoplay-blocked play() that rejects immediately) would
+    //     skip the "Seer, open your eyes" screen in a single frame.
+    const afterCue = (cue: string, advance: () => void, fallbackMs = 9000, minMs = 4500) => {
+      const start = Date.now();
       const go = () => {
         if (cancelled) return;
         if (fallback) { clearTimeout(fallback); fallback = null; }
-        advance();
+        const elapsed = Date.now() - start;
+        const wait = Math.max(0, minMs - elapsed);
+        if (wait === 0) {
+          advance();
+        } else {
+          fallback = setTimeout(() => { if (!cancelled) advance(); }, wait);
+        }
       };
       fallback = setTimeout(go, fallbackMs);
       playCue(cue, { onEnded: go });
@@ -331,7 +344,14 @@ const OneNightWWLocalBoard: React.FC<GameComponentProps> = ({ players, onComplet
             </p>
             <button
               type="button"
-              onClick={() => setPhase({ kind: "night-intro" })}
+              onClick={() => {
+                // Prime the narrator audio element inside this user
+                // gesture so the subsequent auto-advanced cues (which
+                // happen without new gestures) pass iOS Safari +
+                // Chrome autoplay policies.
+                primeNarrator();
+                setPhase({ kind: "night-intro" });
+              }}
               className="mt-10 w-full rounded-md bg-[hsl(var(--ember))] py-3 font-mono text-[11px] uppercase tracking-wider text-bg transition-opacity hover:opacity-90"
             >
               Begin the night →

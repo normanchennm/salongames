@@ -8,7 +8,7 @@
 // Cache version bumps on every deploy. Old caches get purged on
 // activate so users don't get stuck on stale chunks.
 
-const CACHE = "salongames-v2";
+const CACHE = "salongames-v3";
 const SHELL = [
   "/",
   "/about/",
@@ -64,12 +64,20 @@ self.addEventListener("fetch", (event) => {
 
   // Static assets: cache-first, backfill on miss. Narration MP3s,
   // icons, _next/static chunks all hit this path.
+  //
+  // Only cache successful (2xx) responses. Without this check, a
+  // 404 response (e.g., a role portrait that was temporarily missing)
+  // gets stored and served forever even after the asset is deployed.
+  // That's how users ended up seeing stale "image missing" for role
+  // art that was fixed server-side weeks ago.
   event.respondWith(
     caches.match(req).then((hit) => {
       if (hit) return hit;
       return fetch(req).then((res) => {
-        const clone = res.clone();
-        caches.open(CACHE).then((c) => c.put(req, clone));
+        if (res && res.ok) {
+          const clone = res.clone();
+          caches.open(CACHE).then((c) => c.put(req, clone));
+        }
         return res;
       });
     })
