@@ -1,5 +1,5 @@
 import type { Game } from "@/games/types";
-import { ComingSoonBoard } from "@/games/_shared/ComingSoonBoard";
+import { MapOfUsBoard } from "./Board";
 
 const mapofus: Game = {
   id: "mapofus",
@@ -12,9 +12,9 @@ const mapofus: Game = {
   tier: "free",
   coverGradient: ["#2a4a3a", "#100d0b"],
   description:
-    "Take turns pinning places that matter — where you first met, the kitchen you cooked in until 2am, the trip you keep talking about doing, the bench you'd put a plaque on. The app saves the list and you can keep adding to it forever. A relationship artifact that grows with you instead of getting lost in a Notes app.",
-  Component: ComingSoonBoard,
-  comingSoon: true,
+    "Take turns pinning places that matter — where you first met, the kitchen you cooked in until 2am, the trip you keep talking about doing, the bench you'd put a plaque on. Each pin: place name + one line. The app saves the list and you can keep adding to it forever. A relationship artifact that grows with you instead of getting lost in a Notes app.",
+  Component: MapOfUsBoard,
+  supportsRemote: true,
 };
 
 export default mapofus;
