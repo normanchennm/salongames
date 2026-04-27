@@ -1,5 +1,5 @@
 import type { Game } from "@/games/types";
-import { ComingSoonBoard } from "@/games/_shared/ComingSoonBoard";
+import { ThirtySixBoard } from "./Board";
 
 const thirtysix: Game = {
   id: "thirtysix",
@@ -13,8 +13,8 @@ const thirtysix: Game = {
   coverGradient: ["#3a2a4a", "#100d0b"],
   description:
     "Arthur Aron's research-backed deepening sequence — 36 questions in three escalating sets, designed to accelerate closeness between two people. No scoring, no tricks. Pass the phone, answer fully, take the next when you're both ready. The original viral 'love test' that actually works.",
-  Component: ComingSoonBoard,
-  comingSoon: true,
+  Component: ThirtySixBoard,
+  supportsRemote: true,
 };
 
 export default thirtysix;

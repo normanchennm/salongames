@@ -34,6 +34,10 @@ import { goRemoteInitialState, goRemoteReducer } from "./go/remote";
 import { nmmRemoteInitialState, nmmRemoteReducer } from "./nmm/remote";
 import { chessRemoteInitialState, chessRemoteReducer } from "./chess/remote";
 import { bgRemoteInitialState, bgRemoteReducer } from "./backgammon/remote";
+// --- Couple games ---
+import { thirtysixRemoteInitialState, thirtysixRemoteReducer } from "./thirtysix/remote";
+import { mjRemoteInitialState, mjRemoteReducer } from "./memoryjar/remote";
+import { drRemoteInitialState, drRemoteReducer } from "./dateroulette/remote";
 
 export const REMOTE_CONFIGS: Record<string, RemoteGameConfig> = {
   fibbage: { initialState: fibRemoteInitialState, reducer: fibRemoteReducer as RemoteGameConfig["reducer"] },
@@ -62,6 +66,10 @@ export const REMOTE_CONFIGS: Record<string, RemoteGameConfig> = {
   nmm: { initialState: nmmRemoteInitialState, reducer: nmmRemoteReducer as RemoteGameConfig["reducer"] },
   chess: { initialState: chessRemoteInitialState, reducer: chessRemoteReducer as RemoteGameConfig["reducer"] },
   backgammon: { initialState: bgRemoteInitialState, reducer: bgRemoteReducer as RemoteGameConfig["reducer"] },
+  // --- Couple games ---
+  thirtysix: { initialState: thirtysixRemoteInitialState, reducer: thirtysixRemoteReducer as RemoteGameConfig["reducer"] },
+  memoryjar: { initialState: () => mjRemoteInitialState(0), reducer: mjRemoteReducer as RemoteGameConfig["reducer"] },
+  dateroulette: { initialState: drRemoteInitialState, reducer: drRemoteReducer as RemoteGameConfig["reducer"] },
 };
 
 export function getRemoteConfig(gameId: string): RemoteGameConfig | undefined {
