@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
 import { playCue, WEREWOLF_CUES } from "@/lib/narrator";
 import { useScrollToTop } from "@/lib/useScrollToTop";
@@ -53,18 +53,64 @@ const WerewolfLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete,
   // a no-op when the MP3 is missing or the user has muted; this useEffect
   // only needs to map phase → cue. Keeping it centralized beats
   // sprinkling playCue() through every transition handler.
+  //
+  // Night transitions also chain a "[role], close your eyes" cue from
+  // the previous role before the new role's open cue plays. Without
+  // this the wolves never get told to close before the seer wakes,
+  // which is jarring at the table.
+  const prevPhaseKindRef = useRef<string | null>(null);
   useEffect(() => {
     const kind = state.phase.kind;
-    if (kind === "night-intro") playCue(WEREWOLF_CUES.nightIntro);
-    else if (kind === "night-werewolf") playCue(WEREWOLF_CUES.nightWolf);
-    else if (kind === "night-seer") playCue(WEREWOLF_CUES.nightSeer);
-    else if (kind === "night-doctor") playCue(WEREWOLF_CUES.nightDoctor);
-    else if (kind === "day-resolution") {
+    const prev = prevPhaseKindRef.current;
+    prevPhaseKindRef.current = kind;
+
+    const closeCueFor = (k: string | null) =>
+      k === "night-werewolf" ? WEREWOLF_CUES.nightWolfClose
+        : k === "night-seer" ? WEREWOLF_CUES.nightSeerClose
+        : k === "night-doctor" ? WEREWOLF_CUES.nightDoctorClose
+        : null;
+    const openCueFor = (k: string) =>
+      k === "night-intro" ? WEREWOLF_CUES.nightIntro
+        : k === "night-werewolf" ? WEREWOLF_CUES.nightWolf
+        : k === "night-seer" ? WEREWOLF_CUES.nightSeer
+        : k === "night-doctor" ? WEREWOLF_CUES.nightDoctor
+        : null;
+
+    const closeCue = closeCueFor(prev);
+    const openCue = openCueFor(kind);
+
+    if (closeCue && openCue) {
+      // Transitioning between night roles — chain prev-close → next-open.
+      playCue(closeCue, { onEnded: () => playCue(openCue) });
+      return;
+    }
+    if (openCue) {
+      playCue(openCue);
+      return;
+    }
+    if (closeCue && (kind === "day-resolution" || kind === "day-discussion")) {
+      // Last role of the night → play their close cue before day breaks.
+      playCue(closeCue, {
+        onEnded: () => {
+          if (kind === "day-resolution") {
+            const p = state.phase as { kind: "day-resolution"; killedId: string | null };
+            playCue(p.killedId ? WEREWOLF_CUES.dayKilled : WEREWOLF_CUES.daySafe);
+          } else {
+            playCue(WEREWOLF_CUES.dayDiscuss);
+          }
+        },
+      });
+      return;
+    }
+
+    if (kind === "day-resolution") {
       const p = state.phase as { kind: "day-resolution"; killedId: string | null };
       playCue(p.killedId ? WEREWOLF_CUES.dayKilled : WEREWOLF_CUES.daySafe);
-    } else if (kind === "day-discussion") playCue(WEREWOLF_CUES.dayDiscuss);
-    else if (kind === "day-vote") playCue(WEREWOLF_CUES.dayVote);
-    else if (kind === "day-resolution-vote") {
+    } else if (kind === "day-discussion") {
+      playCue(WEREWOLF_CUES.dayDiscuss);
+    } else if (kind === "day-vote") {
+      playCue(WEREWOLF_CUES.dayVote);
+    } else if (kind === "day-resolution-vote") {
       const p = state.phase as { kind: "day-resolution-vote"; eliminatedId: string | null };
       playCue(p.eliminatedId ? WEREWOLF_CUES.dayVotedOut : WEREWOLF_CUES.dayTie);
     } else if (kind === "end") {

@@ -32,44 +32,66 @@ const GAMES = {
   werewolf: [
     // No role cues — narrating the role at reveal leaks it to anyone
     // near the phone. Role shows visually only.
-    ["night-intro",     "Night falls on the village. Everyone, close your eyes."],
-    ["night-wolf",      "Werewolves. Open your eyes. Silently choose your victim."],
-    ["night-seer",      "Seer. Open your eyes. Learn one player's truth."],
-    ["night-doctor",    "Doctor. Open your eyes. Save one soul tonight."],
-    ["day-killed",      "Morning comes. Someone was killed in the night."],
-    ["day-safe",        "Morning comes. Nobody was harmed."],
-    ["day-discuss",     "Day breaks. Discuss. Find the wolves among you."],
-    ["day-vote",        "Cast your votes."],
-    ["day-voted-out",   "The village has spoken."],
-    ["day-tie",         "A tie. The wolves remain among you."],
-    ["village-wins",    "Dawn at last. The village is safe."],
-    ["wolves-win",      "The wolves have won. The village is no more."],
+    //
+    // Each night role is played as TWO cues — an "open eyes / wake up"
+    // cue when the role is summoned, and a matching "close eyes / sleep"
+    // cue once the role's action finishes. Without the close cue, the
+    // table hears the wolves wake but never hears them sent back to
+    // sleep — and the seer's "open eyes" cue lands while the wolves
+    // still have theirs open.
+    ["night-intro",       "Night falls on the village. Everyone, close your eyes."],
+    ["night-wolf",        "Werewolves. Open your eyes. Silently choose your victim."],
+    ["night-wolf-close",  "Werewolves. Close your eyes and go back to sleep."],
+    ["night-seer",        "Seer. Open your eyes. Learn one player's truth."],
+    ["night-seer-close",  "Seer. Close your eyes and go back to sleep."],
+    ["night-doctor",      "Doctor. Open your eyes. Save one soul tonight."],
+    ["night-doctor-close","Doctor. Close your eyes and go back to sleep."],
+    ["day-killed",        "Morning comes. Someone was killed in the night."],
+    ["day-safe",          "Morning comes. Nobody was harmed."],
+    ["day-discuss",       "Day breaks. Discuss. Find the wolves among you."],
+    ["day-vote",          "Cast your votes."],
+    ["day-voted-out",     "The village has spoken."],
+    ["day-tie",           "A tie. The wolves remain among you."],
+    ["village-wins",      "Dawn at last. The village is safe."],
+    ["wolves-win",        "The wolves have won. The village is no more."],
   ],
   mafia: [
     // No role cues — narrating the role leaks it at the table. Role
-    // shows visually only.
-    ["night-intro",      "The town sleeps. Everyone, close your eyes."],
-    ["night-mafia",      "Mafia. Wake up. Quietly choose your target."],
-    ["night-detective",  "Detective. Wake up. Investigate one player."],
-    ["night-doctor",     "Doctor. Wake up. Protect one player tonight."],
-    ["day-killed",       "The sun rises. One of us was killed in the night."],
-    ["day-safe",         "The sun rises. Nobody was harmed tonight."],
-    ["day-discuss",      "The town must decide. Talk. Accuse. Defend."],
-    ["day-vote",         "Cast your votes."],
-    ["day-voted-out",    "The town has chosen."],
-    ["day-tie",          "No agreement. The Mafia live another night."],
-    ["town-wins",        "The town has won. The Mafia is finished."],
-    ["mafia-wins",       "The Mafia owns this town now."],
+    // shows visually only. Two-cue night structure (wake + sleep) for
+    // the same reason as Werewolf — see comment above.
+    ["night-intro",          "The town sleeps. Everyone, close your eyes."],
+    ["night-mafia",          "Mafia. Wake up. Quietly choose your target."],
+    ["night-mafia-close",    "Mafia. Close your eyes and go back to sleep."],
+    ["night-detective",      "Detective. Wake up. Investigate one player."],
+    ["night-detective-close","Detective. Close your eyes and go back to sleep."],
+    ["night-doctor",         "Doctor. Wake up. Protect one player tonight."],
+    ["night-doctor-close",   "Doctor. Close your eyes and go back to sleep."],
+    ["day-killed",           "The sun rises. One of us was killed in the night."],
+    ["day-safe",             "The sun rises. Nobody was harmed tonight."],
+    ["day-discuss",          "The town must decide. Talk. Accuse. Defend."],
+    ["day-vote",             "Cast your votes."],
+    ["day-voted-out",        "The town has chosen."],
+    ["day-tie",              "No agreement. The Mafia live another night."],
+    ["town-wins",            "The town has won. The Mafia is finished."],
+    ["mafia-wins",           "The Mafia owns this town now."],
   ],
   onenightww: [
-    ["night-intro",       "One night. Everyone, close your eyes now."],
-    ["night-werewolves",  "Werewolves. Open your eyes and look at each other."],
-    ["night-seer",        "Seer. Choose one player's card, or two from the center."],
-    ["night-robber",      "Robber. Take another player's card and see what you stole."],
-    ["night-troublemaker","Troublemaker. Swap two players' cards. Don't look."],
-    ["day-intro",         "Morning. Everyone, open your eyes and talk."],
-    ["village-wins",      "A werewolf is down. The village wins."],
-    ["werewolves-win",    "No werewolf was caught. The wolves win this night."],
+    // Two-cue night structure — see Werewolf comment. ONWW also has
+    // an explicit "open your eyes" prefix on every wake cue so the
+    // narrator never just announces a role mid-action and leaves the
+    // table guessing whether the previous role ever closed up.
+    ["night-intro",            "One night begins. Everyone, close your eyes. Don't open them until I call your role."],
+    ["night-werewolves",       "Werewolves. Open your eyes and look at each other. If you are alone, peek at one center card."],
+    ["night-werewolves-close", "Werewolves. Close your eyes."],
+    ["night-seer",             "Seer. Open your eyes. Choose one player's card to look at, or two cards from the center."],
+    ["night-seer-close",       "Seer. Close your eyes."],
+    ["night-robber",           "Robber. Open your eyes. Take another player's card and look at what you stole. You are now that role."],
+    ["night-robber-close",     "Robber. Close your eyes."],
+    ["night-troublemaker",     "Troublemaker. Open your eyes. Swap two other players' cards. Don't look at them."],
+    ["night-troublemaker-close","Troublemaker. Close your eyes."],
+    ["day-intro",              "Morning. Everyone, open your eyes and talk."],
+    ["village-wins",           "A werewolf is down. The village wins."],
+    ["werewolves-win",         "No werewolf was caught. The wolves win this night."],
   ],
   avalon: [
     ["mission-success",   "The quest is a success."],

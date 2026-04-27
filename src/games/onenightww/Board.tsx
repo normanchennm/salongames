@@ -76,19 +76,23 @@ type Phase =
   | { kind: "night-intro" }
   | { kind: "night-werewolves-pass" }
   | { kind: "night-werewolves-reveal" }
+  | { kind: "night-werewolves-close" }
   | { kind: "night-seer-pass" }
   | { kind: "night-seer-choose" }
   | { kind: "night-seer-pick-player" }
   | { kind: "night-seer-result-player"; targetId: string; role: Role }
   | { kind: "night-seer-pick-center" }
   | { kind: "night-seer-result-center"; idxs: number[]; roles: Role[] }
+  | { kind: "night-seer-close" }
   | { kind: "night-robber-pass" }
   | { kind: "night-robber-pick" }
   | { kind: "night-robber-result"; targetId: string; newRole: Role }
+  | { kind: "night-robber-close" }
   | { kind: "night-troublemaker-pass" }
   | { kind: "night-troublemaker-pick1" }
   | { kind: "night-troublemaker-pick2"; firstId: string }
   | { kind: "night-troublemaker-done"; firstId: string; secondId: string }
+  | { kind: "night-troublemaker-close" }
   | { kind: "day-intro" }
   | { kind: "vote-pass"; voterIndex: number }
   | { kind: "vote-input"; voterIndex: number }
@@ -103,6 +107,17 @@ function findPlayerIdByStartingRole(startingRoles: Record<string, Role>, role: R
 function findAllPlayersByStartingRole(startingRoles: Record<string, Role>, role: Role): string[] {
   return Object.entries(startingRoles).filter(([, r]) => r === role).map(([id]) => id);
 }
+
+/** Brief between-role screen — narrator says "[role], close your eyes"
+ *  while the table can read this matching prompt. Holds for the cue
+ *  duration and then advances to the next role's pass screen. */
+const CloseEyesScreen: React.FC<{ role: string }> = ({ role }) => (
+  <section className="mx-auto max-w-md animate-fade-up text-center">
+    <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-muted">{role}</p>
+    <h2 className="mt-4 font-display text-3xl italic">Close your eyes.</h2>
+    <p className="mt-3 text-sm text-muted">Narrator will call the next role.</p>
+  </section>
+);
 
 export const OneNightWWBoard: React.FC<GameComponentProps> = (props) => {
   if (props.remote) return <OneNightWWRemoteBoard {...props} remote={props.remote} />;
@@ -173,15 +188,17 @@ const OneNightWWLocalBoard: React.FC<GameComponentProps> = ({ players, onComplet
     } else if (k === "night-werewolves-pass") {
       const wwIds = findAllPlayersByStartingRole(state.startingRoles, "werewolf");
       if (wwIds.length === 0) {
-        // Skip the role-specific narration — calling out an absent role
-        // ("werewolves, open your eyes") is the bug. Hand off silently.
+        // Skip the role entirely — open AND close. Calling out an
+        // absent role is the bug.
         hold(0, () => setPhase({ kind: "night-seer-pass" }));
       } else {
         afterCue(ONENIGHT_CUES.nightWerewolves, () => setPhase({ kind: "night-werewolves-reveal" }));
       }
     } else if (k === "night-werewolves-reveal") {
       // Solo wolves also peek a center card here — give extra read time.
-      hold(7000, () => setPhase({ kind: "night-seer-pass" }));
+      hold(7000, () => setPhase({ kind: "night-werewolves-close" }));
+    } else if (k === "night-werewolves-close") {
+      afterCue(ONENIGHT_CUES.nightWerewolvesClose, () => setPhase({ kind: "night-seer-pass" }));
     } else if (k === "night-seer-pass") {
       const seerId = findPlayerIdByStartingRole(state.startingRoles, "seer");
       if (!seerId) {
@@ -190,7 +207,9 @@ const OneNightWWLocalBoard: React.FC<GameComponentProps> = ({ players, onComplet
         afterCue(ONENIGHT_CUES.nightSeer, () => setPhase({ kind: "night-seer-choose" }));
       }
     } else if (k === "night-seer-result-player" || k === "night-seer-result-center") {
-      hold(6000, () => setPhase({ kind: "night-robber-pass" }));
+      hold(6000, () => setPhase({ kind: "night-seer-close" }));
+    } else if (k === "night-seer-close") {
+      afterCue(ONENIGHT_CUES.nightSeerClose, () => setPhase({ kind: "night-robber-pass" }));
     } else if (k === "night-robber-pass") {
       const robberId = findPlayerIdByStartingRole(state.startingRoles, "robber");
       if (!robberId) {
@@ -199,7 +218,9 @@ const OneNightWWLocalBoard: React.FC<GameComponentProps> = ({ players, onComplet
         afterCue(ONENIGHT_CUES.nightRobber, () => setPhase({ kind: "night-robber-pick" }));
       }
     } else if (k === "night-robber-result") {
-      hold(6000, () => setPhase({ kind: "night-troublemaker-pass" }));
+      hold(6000, () => setPhase({ kind: "night-robber-close" }));
+    } else if (k === "night-robber-close") {
+      afterCue(ONENIGHT_CUES.nightRobberClose, () => setPhase({ kind: "night-troublemaker-pass" }));
     } else if (k === "night-troublemaker-pass") {
       const tmId = findPlayerIdByStartingRole(state.startingRoles, "troublemaker");
       if (!tmId) {
@@ -208,7 +229,9 @@ const OneNightWWLocalBoard: React.FC<GameComponentProps> = ({ players, onComplet
         afterCue(ONENIGHT_CUES.nightTroublemaker, () => setPhase({ kind: "night-troublemaker-pick1" }));
       }
     } else if (k === "night-troublemaker-done") {
-      hold(5000, () => setPhase({ kind: "day-intro" }));
+      hold(5000, () => setPhase({ kind: "night-troublemaker-close" }));
+    } else if (k === "night-troublemaker-close") {
+      afterCue(ONENIGHT_CUES.nightTroublemakerClose, () => setPhase({ kind: "day-intro" }));
     } else if (k === "day-intro") {
       // Play the wake-up cue but DON'T auto-advance — players need
       // however long they need to discuss before tapping "Start voting".
@@ -395,6 +418,18 @@ const OneNightWWLocalBoard: React.FC<GameComponentProps> = ({ players, onComplet
         </p>
       </section>
     );
+  }
+  if (phase.kind === "night-werewolves-close") {
+    return <CloseEyesScreen role="Werewolves" />;
+  }
+  if (phase.kind === "night-seer-close") {
+    return <CloseEyesScreen role="Seer" />;
+  }
+  if (phase.kind === "night-robber-close") {
+    return <CloseEyesScreen role="Robber" />;
+  }
+  if (phase.kind === "night-troublemaker-close") {
+    return <CloseEyesScreen role="Troublemaker" />;
   }
   if (phase.kind === "night-werewolves-reveal") {
     const wwIds = findAllPlayersByStartingRole(state.startingRoles, "werewolf");

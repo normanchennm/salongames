@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
 import { playCue, MAFIA_CUES } from "@/lib/narrator";
 import { useScrollToTop } from "@/lib/useScrollToTop";
@@ -50,19 +50,60 @@ const MafiaLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, on
   useScrollToTop(state.phase.kind + (state.phase.kind === "reveal" ? String(state.phase.current) : ""));
 
   // Narration cues fire when the phase changes. Mirrors Werewolf's
-  // wiring — missing MP3 = silent no-op.
+  // wiring — missing MP3 = silent no-op. Night transitions chain
+  // [previous-role]-close → [next-role]-wake so each role gets told to
+  // sleep before the next one wakes.
+  const prevPhaseKindRef = useRef<string | null>(null);
   useEffect(() => {
     const kind = state.phase.kind;
-    if (kind === "night-intro") playCue(MAFIA_CUES.nightIntro);
-    else if (kind === "night-mafia") playCue(MAFIA_CUES.nightMafia);
-    else if (kind === "night-detective") playCue(MAFIA_CUES.nightDetective);
-    else if (kind === "night-doctor") playCue(MAFIA_CUES.nightDoctor);
-    else if (kind === "day-resolution") {
+    const prev = prevPhaseKindRef.current;
+    prevPhaseKindRef.current = kind;
+
+    const closeCueFor = (k: string | null) =>
+      k === "night-mafia" ? MAFIA_CUES.nightMafiaClose
+        : k === "night-detective" ? MAFIA_CUES.nightDetectiveClose
+        : k === "night-doctor" ? MAFIA_CUES.nightDoctorClose
+        : null;
+    const openCueFor = (k: string) =>
+      k === "night-intro" ? MAFIA_CUES.nightIntro
+        : k === "night-mafia" ? MAFIA_CUES.nightMafia
+        : k === "night-detective" ? MAFIA_CUES.nightDetective
+        : k === "night-doctor" ? MAFIA_CUES.nightDoctor
+        : null;
+
+    const closeCue = closeCueFor(prev);
+    const openCue = openCueFor(kind);
+
+    if (closeCue && openCue) {
+      playCue(closeCue, { onEnded: () => playCue(openCue) });
+      return;
+    }
+    if (openCue) {
+      playCue(openCue);
+      return;
+    }
+    if (closeCue && (kind === "day-resolution" || kind === "day-discussion")) {
+      playCue(closeCue, {
+        onEnded: () => {
+          if (kind === "day-resolution") {
+            const p = state.phase as { kind: "day-resolution"; killedId: string | null };
+            playCue(p.killedId ? MAFIA_CUES.dayKilled : MAFIA_CUES.daySafe);
+          } else {
+            playCue(MAFIA_CUES.dayDiscuss);
+          }
+        },
+      });
+      return;
+    }
+
+    if (kind === "day-resolution") {
       const p = state.phase as { kind: "day-resolution"; killedId: string | null };
       playCue(p.killedId ? MAFIA_CUES.dayKilled : MAFIA_CUES.daySafe);
-    } else if (kind === "day-discussion") playCue(MAFIA_CUES.dayDiscuss);
-    else if (kind === "day-vote") playCue(MAFIA_CUES.dayVote);
-    else if (kind === "day-resolution-vote") {
+    } else if (kind === "day-discussion") {
+      playCue(MAFIA_CUES.dayDiscuss);
+    } else if (kind === "day-vote") {
+      playCue(MAFIA_CUES.dayVote);
+    } else if (kind === "day-resolution-vote") {
       const p = state.phase as { kind: "day-resolution-vote"; eliminatedId: string | null };
       playCue(p.eliminatedId ? MAFIA_CUES.dayVotedOut : MAFIA_CUES.dayTie);
     } else if (kind === "end") {
