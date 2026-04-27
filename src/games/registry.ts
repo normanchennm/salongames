@@ -50,6 +50,21 @@ import go from "./go";
 import chess from "./chess";
 import nhiespicy from "./nhiespicy";
 import truthordare from "./truthordare";
+// --- Couple games (stubbed coming-soon) ---
+import thirtysix from "./thirtysix";
+import memoryjar from "./memoryjar";
+import lovelanguages from "./lovelanguages";
+import mapofus from "./mapofus";
+import newlywed from "./newlywed";
+import hesaidshesaid from "./hesaidshesaid";
+import compatbingo from "./compatbingo";
+import dateroulette from "./dateroulette";
+import bucketlist from "./bucketlist";
+import charadestwo from "./charadestwo";
+import telephonepictwo from "./telephonepictwo";
+import pillowtalk from "./pillowtalk";
+import torcouples from "./torcouples";
+import yesnotourney from "./yesnotourney";
 
 export const GAMES: Game[] = [
   werewolf,
@@ -79,6 +94,21 @@ export const GAMES: Game[] = [
   notstrangers,
   nhiespicy,
   truthordare,
+  // --- Couple-games row (coming soon) ---
+  thirtysix,
+  newlywed,
+  hesaidshesaid,
+  compatbingo,
+  memoryjar,
+  lovelanguages,
+  dateroulette,
+  bucketlist,
+  mapofus,
+  charadestwo,
+  telephonepictwo,
+  pillowtalk,
+  torcouples,
+  yesnotourney,
   tictactoe,
   connect4,
   checkers,

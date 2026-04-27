@@ -1,0 +1,20 @@
+import type { Game } from "@/games/types";
+import { ComingSoonBoard } from "@/games/_shared/ComingSoonBoard";
+
+const thirtysix: Game = {
+  id: "thirtysix",
+  name: "36 Questions",
+  tagline: "The Aron sequence — three sets, deeper each time. For two.",
+  category: "party",
+  minPlayers: 2,
+  maxPlayers: 2,
+  estimatedMinutes: 45,
+  tier: "free",
+  coverGradient: ["#3a2a4a", "#100d0b"],
+  description:
+    "Arthur Aron's research-backed deepening sequence — 36 questions in three escalating sets, designed to accelerate closeness between two people. No scoring, no tricks. Pass the phone, answer fully, take the next when you're both ready. The original viral 'love test' that actually works.",
+  Component: ComingSoonBoard,
+  comingSoon: true,
+};
+
+export default thirtysix;

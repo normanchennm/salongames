@@ -102,6 +102,11 @@ export interface Game {
    *  worse — social deduction and hidden-hand trick-takers. Has no
    *  effect unless `supportsRemote` is also true. */
   hideLocalOption?: boolean;
+  /** True if this game is in the catalog as a placeholder — visible
+   *  for product / marketing reasons but not yet playable. The card
+   *  renders with a "Coming soon" overlay and the detail page shows
+   *  a waitlist-style placeholder instead of the mode picker. */
+  comingSoon?: boolean;
 }
 
 /** Host-side state machine for remote play. Lives outside the Game type

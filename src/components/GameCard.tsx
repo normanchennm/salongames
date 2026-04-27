@@ -39,6 +39,7 @@ export function GameCard({ game, ribbon }: GameCardProps) {
 
   const showImage = !imageFailed;
   const locked = hydrated && isGameLocked(game, proUnlocked);
+  const comingSoon = !!game.comingSoon;
 
   const card = (
     <>
@@ -102,6 +103,13 @@ export function GameCard({ game, ribbon }: GameCardProps) {
                 Pro
               </span>
             </div>
+          </div>
+        )}
+        {comingSoon && (
+          <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-bg/60 backdrop-blur-[2px]">
+            <span className="rounded-full border border-[hsl(var(--ember))] bg-bg/90 px-4 py-1.5 font-mono text-[10px] uppercase tracking-[0.3em] text-[hsl(var(--ember))]">
+              coming soon
+            </span>
           </div>
         )}
       </div>

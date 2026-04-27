@@ -148,6 +148,41 @@ export function GameRunner({ gameId }: { gameId: string }) {
 
   // --- DETAIL / MODE PICKER -----------------------------------------
   if (flow.kind === "detail") {
+    // Coming-soon stub: same hero + tagline copy as a real game detail
+    // page (so the URL is shareable + indexable), but no mode picker;
+    // a quiet placeholder block where the picker would be.
+    if (game.comingSoon) {
+      return (
+        <div>
+          <GameHero game={game} />
+          <header className="mb-10 mt-8">
+            <div className="flex items-baseline gap-3">
+              <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-[hsl(var(--ember))]">
+                {game.category.replace("-", " ")}
+              </span>
+              <span className="h-px w-8 bg-[hsl(var(--ember))]" aria-hidden />
+            </div>
+            <h1 className="mt-3 font-display text-5xl italic leading-[0.95] text-fg sm:text-6xl">
+              {game.name}
+            </h1>
+            <p className="drop-cap mt-6 max-w-xl text-base leading-relaxed text-fg/85">
+              {game.description}
+            </p>
+          </header>
+          <div className="hairline-heavy my-10" />
+          <div className="rounded-md border border-[hsl(var(--ember)/0.4)] bg-[hsl(var(--ember)/0.05)] px-6 py-8 text-center">
+            <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-[hsl(var(--ember))]">
+              coming soon
+            </p>
+            <h2 className="mt-3 font-display text-3xl italic">Still in the workshop.</h2>
+            <p className="mt-3 max-w-md mx-auto text-sm leading-relaxed text-muted">
+              We're crafting the prompts and pace for this one. It'll land in a future drop —
+              if you want to be the first to know, drop a note via feedback.
+            </p>
+          </div>
+        </div>
+      );
+    }
     return (
       <div>
         <GameHero game={game} />
