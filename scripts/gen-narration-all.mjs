@@ -94,6 +94,7 @@ const GAMES = {
     ["werewolves-win",         "No werewolf was caught. The wolves win this night."],
   ],
   avalon: [
+    ["mission-intro",     "A new quest. The leader proposes a team."],
     ["mission-success",   "The quest is a success."],
     ["mission-fail",      "The quest has failed."],
     ["proposal-approved", "The party is approved."],
@@ -107,6 +108,7 @@ const GAMES = {
     ["guess-one-minute",  "One minute left."],
     ["guess-timeout",     "Time is up. The Commoners have failed."],
     ["hunt-start",        "Two minutes. Find the Insider among you."],
+    ["vote-start",        "Time to vote. Name the Insider."],
     ["insider-caught",    "The Insider is caught. The Commoners have won."],
     ["insider-escaped",   "The Insider has slipped away. The Commoners have lost."],
   ],
@@ -119,6 +121,7 @@ const GAMES = {
     ["civilians-win",     "The Spy is caught. The civilians win."],
   ],
   resistance: [
+    ["mission-intro",     "New mission. Leader, propose your team."],
     ["proposal-approved", "The mission team is approved."],
     ["proposal-rejected", "The mission team is rejected."],
     ["mission-success",   "The mission succeeds."],
@@ -127,6 +130,7 @@ const GAMES = {
     ["spies-win",         "Three failed missions. The Spies have won."],
   ],
   sh: [
+    ["round-intro",       "New round. President, choose your chancellor."],
     ["election-approved", "The government is elected."],
     ["election-failed",   "The government fails."],
     ["liberal-policy",    "A liberal policy is enacted."],
@@ -144,12 +148,14 @@ const GAMES = {
 
   fibbage: [
     ["round-start",       "New round. One real trivia question. Write your bluff."],
+    ["vote-start",        "Time to vote. Find the truth."],
     ["truth-reveal",      "The truth."],
     ["all-bluffed",       "No one got it. Bluffers reign."],
     ["someone-nailed-it", "Someone found the truth."],
     ["winner",            "And we have a winner."],
   ],
   coup: [
+    ["turn-start",    "Next turn. Make your move."],
     ["challenge",     "Challenge."],
     ["bluff-caught",  "Bluff called. Lose influence."],
     ["truthful",      "The truth. Challenger loses influence."],
@@ -157,6 +163,7 @@ const GAMES = {
     ["last-standing", "Only one remains. The throne is yours."],
   ],
   codenames: [
+    ["spymaster-turn","Spymaster, give your clue."],
     ["assassin",    "The assassin. Game over."],
     ["contact",     "Contact."],
     ["bystander",   "An innocent. Turn over."],
@@ -164,6 +171,7 @@ const GAMES = {
     ["team-b-wins", "Team B has them all. Game."],
   ],
   liarsdice: [
+    ["round-intro",  "New round. Roll your dice."],
     ["call-liar",    "Liar. Reveal all dice."],
     ["bid-holds",    "The bid holds. Caller loses a die."],
     ["bluff-caught", "Bluff exposed. Bidder loses a die."],

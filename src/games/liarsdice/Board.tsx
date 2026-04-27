@@ -74,7 +74,8 @@ export const LiarsDiceBoard: React.FC<GameComponentProps> = ({ players, onComple
   useScrollToTop(phase.kind + ("round" in phase ? `-${phase.round}` : "") + ("revealIdx" in phase ? `-${phase.revealIdx}` : ""));
 
   useEffect(() => {
-    if (phase.kind === "reveal-all") {
+    if (phase.kind === "round-intro") playCue(LIARSDICE_CUES.roundIntro);
+    else if (phase.kind === "reveal-all") {
       playCue(LIARSDICE_CUES.callLiar);
       const holds = phase.total >= phase.bid.quantity;
       setTimeout(() => playCue(holds ? LIARSDICE_CUES.bidHolds : LIARSDICE_CUES.bluffCaught), 2500);

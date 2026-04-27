@@ -74,7 +74,8 @@ const ResistanceLocalBoard: React.FC<GameComponentProps> = ({ players, onComplet
   useScrollToTop(phase.kind + ("mission" in phase ? `-m${phase.mission}` : "") + ("voterIdx" in phase ? `-v${phase.voterIdx}` : "") + ("teamIdx" in phase ? `-t${phase.teamIdx}` : ""));
 
   useEffect(() => {
-    if (phase.kind === "vote-result") {
+    if (phase.kind === "mission-intro") playCue(RESISTANCE_CUES.missionIntro);
+    else if (phase.kind === "vote-result") {
       const ups = Object.values(phase.votes).filter((v) => v === "up").length;
       const approved = ups > players.length - ups;
       playCue(approved ? RESISTANCE_CUES.proposalApproved : RESISTANCE_CUES.proposalRejected);

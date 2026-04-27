@@ -127,6 +127,7 @@ const FibbageLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, 
 
   useEffect(() => {
     if (phase.kind === "bluff-pass" && phase.authorIndex === 0) playCue(FIBBAGE_CUES.roundStart);
+    else if (phase.kind === "vote-pass" && phase.voterIndex === 0) playCue(FIBBAGE_CUES.voteStart);
     else if (phase.kind === "reveal") {
       const anyTruthVote = Object.values(phase.votes).some((id) => phase.options.find((o) => o.id === id)?.isTruth);
       playCue(FIBBAGE_CUES.truthReveal);

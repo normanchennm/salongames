@@ -42,6 +42,10 @@ export const FibbageRemoteBoard: React.FC<Props> = ({ players, remote, onComplet
     if (!state) return;
     if (state.kind === "bluff" && state.round >= 0 && Object.keys(state.bluffs).length === 0) {
       playCue(FIBBAGE_CUES.roundStart);
+    } else if (state.kind === "vote" && Object.keys(state.votes).length === 0) {
+      // First voter of the round — anchor the voting phase the way
+      // we anchor the bluff phase. Only fires once per round.
+      playCue(FIBBAGE_CUES.voteStart);
     } else if (state.kind === "reveal") {
       const anyTruthVote = Object.values(state.votes).some(
         (id) => state.options.find((o) => o.id === id)?.isTruth,

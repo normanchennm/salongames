@@ -106,7 +106,8 @@ const CoupLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, onQ
   useScrollToTop(phase.kind + ("playerIdx" in phase ? `-${phase.playerIdx}` : "") + ("turnIdx" in core ? `-${core.turnIdx}` : ""));
 
   useEffect(() => {
-    if (phase.kind === "challenge-prompt") playCue(COUP_CUES.challenge);
+    if (phase.kind === "turn-pass") playCue(COUP_CUES.turnStart);
+    else if (phase.kind === "challenge-prompt") playCue(COUP_CUES.challenge);
     else if (phase.kind === "challenge-reveal") playCue(phase.hadIt ? COUP_CUES.truthful : COUP_CUES.bluffCaught);
     else if (phase.kind === "lose-influence-pass") playCue(COUP_CUES.loseInfluence);
     else if (phase.kind === "end") playCue(COUP_CUES.lastStanding);

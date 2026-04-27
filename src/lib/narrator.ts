@@ -194,6 +194,7 @@ export const ONENIGHT_CUES = {
 /** Avalon — medieval/mystical, heavier on drama than Werewolf.
  *  Mission pass/fail, assassin reveal, good/evil verdicts. */
 export const AVALON_CUES = {
+  missionIntro: "/narration/avalon/mission-intro.mp3",
   missionSuccess: "/narration/avalon/mission-success.mp3",
   missionFail: "/narration/avalon/mission-fail.mp3",
   proposalApproved: "/narration/avalon/proposal-approved.mp3",
@@ -209,6 +210,7 @@ export const INSIDER_CUES = {
   guessOneMinute: "/narration/insider/guess-one-minute.mp3",
   guessTimeout: "/narration/insider/guess-timeout.mp3",
   huntStart: "/narration/insider/hunt-start.mp3",
+  voteStart: "/narration/insider/vote-start.mp3",
   insiderCaught: "/narration/insider/insider-caught.mp3",
   insiderEscaped: "/narration/insider/insider-escaped.mp3",
 } as const;
@@ -225,6 +227,7 @@ export const SPYFALL_CUES = {
 
 /** Resistance — mission-driven, parallels Avalon's dramatic beats. */
 export const RESISTANCE_CUES = {
+  missionIntro: "/narration/resistance/mission-intro.mp3",
   proposalApproved: "/narration/resistance/proposal-approved.mp3",
   proposalRejected: "/narration/resistance/proposal-rejected.mp3",
   missionSuccess: "/narration/resistance/mission-success.mp3",
@@ -247,6 +250,7 @@ export function escapeRoomCue(room: string, beat: string, sceneId?: string): str
 /** Chancellor (Secret Hitler) — legislative drama, policy enacts,
  *  dramatic votes. */
 export const SH_CUES = {
+  roundIntro: "/narration/sh/round-intro.mp3",
   electionApproved: "/narration/sh/election-approved.mp3",
   electionFailed: "/narration/sh/election-failed.mp3",
   liberalPolicy: "/narration/sh/liberal-policy.mp3",
@@ -258,6 +262,7 @@ export const SH_CUES = {
 /** Fibbage — game-show truth-reveal drama. */
 export const FIBBAGE_CUES = {
   roundStart: "/narration/fibbage/round-start.mp3",
+  voteStart: "/narration/fibbage/vote-start.mp3",
   truthReveal: "/narration/fibbage/truth-reveal.mp3",
   allBluffed: "/narration/fibbage/all-bluffed.mp3",
   someoneNailedIt: "/narration/fibbage/someone-nailed-it.mp3",
@@ -266,6 +271,7 @@ export const FIBBAGE_CUES = {
 
 /** Coup — challenge + reveal drama. */
 export const COUP_CUES = {
+  turnStart: "/narration/coup/turn-start.mp3",
   challenge: "/narration/coup/challenge.mp3",
   bluffCaught: "/narration/coup/bluff-caught.mp3",
   truthful: "/narration/coup/truthful.mp3",
@@ -275,6 +281,7 @@ export const COUP_CUES = {
 
 /** Code Names — tense tap moments. */
 export const CODENAMES_CUES = {
+  spymasterTurn: "/narration/codenames/spymaster-turn.mp3",
   assassin: "/narration/codenames/assassin.mp3",
   contact: "/narration/codenames/contact.mp3",
   bystander: "/narration/codenames/bystander.mp3",
@@ -284,6 +291,7 @@ export const CODENAMES_CUES = {
 
 /** Liar's Dice — showdown beats. */
 export const LIARSDICE_CUES = {
+  roundIntro: "/narration/liarsdice/round-intro.mp3",
   callLiar: "/narration/liarsdice/call-liar.mp3",
   bidHolds: "/narration/liarsdice/bid-holds.mp3",
   bluffCaught: "/narration/liarsdice/bluff-caught.mp3",

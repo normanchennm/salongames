@@ -63,7 +63,13 @@ const AvalonLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, o
   // would only catch the post-transition phase, by which point
   // dramatically the moment has passed.
   useEffect(() => {
-    if (phase.kind === "quest-resolve") {
+    if (phase.kind === "team-select" && phase.rejections === 0) {
+      // Mission intro fires on a FRESH proposal (rejection streak = 0).
+      // Re-proposals after a rejection use the proposal-rejected cue
+      // and then jump back into team-select; we don't want to double-
+      // narrate "new mission" on the same mission.
+      playCue(AVALON_CUES.missionIntro);
+    } else if (phase.kind === "quest-resolve") {
       playCue(phase.result === "success" ? AVALON_CUES.missionSuccess : AVALON_CUES.missionFail);
     } else if (phase.kind === "assassin-guess") {
       playCue(AVALON_CUES.assassinTurn);

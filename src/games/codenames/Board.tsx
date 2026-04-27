@@ -72,7 +72,8 @@ const CodenamesLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete
   useScrollToTop(phase.kind + ("team" in phase ? `-${phase.team}` : ""));
 
   useEffect(() => {
-    if (phase.kind === "end") {
+    if (phase.kind === "spymaster-pass") playCue(CODENAMES_CUES.spymasterTurn);
+    else if (phase.kind === "end") {
       if (phase.reason.toLowerCase().includes("assassin")) playCue(CODENAMES_CUES.assassin);
       else playCue(phase.winner === "A" ? CODENAMES_CUES.teamAWins : CODENAMES_CUES.teamBWins);
     }

@@ -76,7 +76,8 @@ const SecretHitlerLocalBoard: React.FC<GameComponentProps> = ({ players, onCompl
   useScrollToTop(phase.kind + ("presidentIdx" in phase ? `-p${phase.presidentIdx}` : "") + ("voterIdx" in phase ? `-v${phase.voterIdx}` : "") + ("playerIdx" in phase ? `-rp${phase.playerIdx}` : ""));
 
   useEffect(() => {
-    if (phase.kind === "vote-result") {
+    if (phase.kind === "round-intro") playCue(SH_CUES.roundIntro);
+    else if (phase.kind === "vote-result") {
       const jas = Object.values(phase.votes).filter((v) => v === "ja").length;
       playCue(jas > players.length - jas ? SH_CUES.electionApproved : SH_CUES.electionFailed);
     } else if (phase.kind === "enact-reveal") {

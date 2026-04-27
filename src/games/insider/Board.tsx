@@ -91,6 +91,7 @@ const InsiderLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, 
     if (phase.kind === "guessing") playCue(INSIDER_CUES.guessStart);
     else if (phase.kind === "guess-timeout") playCue(INSIDER_CUES.guessTimeout);
     else if (phase.kind === "hunting") playCue(INSIDER_CUES.huntStart);
+    else if (phase.kind === "vote-pass" && phase.voterIndex === 0) playCue(INSIDER_CUES.voteStart);
     else if (phase.kind === "end") playCue(phase.outcome === "caught" ? INSIDER_CUES.insiderCaught : INSIDER_CUES.insiderEscaped);
   }, [phase]);
 
