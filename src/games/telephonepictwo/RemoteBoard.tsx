@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 import type { GameComponentProps, RemoteContext } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
@@ -25,13 +25,14 @@ export const TelephonePicTwoRemoteBoard: React.FC<Props> = ({ players, remote, o
   const state = remote.state as TPTRemoteState | null;
   const isHost = remote.isHost;
   const dispatch = remote.dispatch as (a: TPTRemoteAction) => void;
-  const completedRef = useRef(false);
   useScrollToTop(state ? state.kind + ("step" in state ? `-${state.step}` : "") : "loading");
 
-  useEffect(() => {
-    if (!isHost || !state || state.kind !== "end") return;
-    if (completedRef.current) return;
-    completedRef.current = true;
+  // Don't auto-fire onComplete on "end" — the chain is the keepsake the
+  // player is meant to read. GameRunner.onComplete bumps the instance
+  // key, which would remount this component before the user sees the
+  // chain. Instead, complete + log only when the host explicitly picks
+  // "Play again" or both players "Leave room" from the end screen.
+  const archiveResult = () => {
     onComplete({
       playedAt: new Date().toISOString(),
       players,
@@ -39,7 +40,7 @@ export const TelephonePicTwoRemoteBoard: React.FC<Props> = ({ players, remote, o
       durationSec: Math.round((Date.now() - startedAt) / 1000),
       highlights: ["Chain complete"],
     });
-  }, [isHost, state, players, onComplete, startedAt]);
+  };
 
   if (!state) {
     return (
@@ -111,7 +112,7 @@ export const TelephonePicTwoRemoteBoard: React.FC<Props> = ({ players, remote, o
               <button
                 type="button"
                 onClick={() => {
-                  completedRef.current = false;
+                  archiveResult();
                   dispatch({ type: "play-again" });
                 }}
                 className="flex-1 rounded-md bg-[hsl(var(--ember))] py-3 font-mono text-[11px] uppercase tracking-wider text-bg"
@@ -123,7 +124,16 @@ export const TelephonePicTwoRemoteBoard: React.FC<Props> = ({ players, remote, o
                 Waiting for host…
               </p>
             )}
-            <button type="button" onClick={onQuit} className="flex-1 rounded-md border border-border py-3 font-mono text-[11px] uppercase tracking-wider text-muted">Leave room</button>
+            <button
+              type="button"
+              onClick={() => {
+                if (isHost) archiveResult();
+                onQuit();
+              }}
+              className="flex-1 rounded-md border border-border py-3 font-mono text-[11px] uppercase tracking-wider text-muted"
+            >
+              Leave room
+            </button>
           </div>
         </section>
       </RemoteFrame>

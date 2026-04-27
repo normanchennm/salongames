@@ -172,35 +172,41 @@ const OneNightWWLocalBoard: React.FC<GameComponentProps> = ({ players, onComplet
       afterCue(ONENIGHT_CUES.nightIntro, () => setPhase({ kind: "night-werewolves-pass" }));
     } else if (k === "night-werewolves-pass") {
       const wwIds = findAllPlayersByStartingRole(state.startingRoles, "werewolf");
-      const next: Phase = wwIds.length === 0
-        ? { kind: "night-seer-pass" }
-        : { kind: "night-werewolves-reveal" };
-      afterCue(ONENIGHT_CUES.nightWerewolves, () => setPhase(next));
+      if (wwIds.length === 0) {
+        // Skip the role-specific narration — calling out an absent role
+        // ("werewolves, open your eyes") is the bug. Hand off silently.
+        hold(0, () => setPhase({ kind: "night-seer-pass" }));
+      } else {
+        afterCue(ONENIGHT_CUES.nightWerewolves, () => setPhase({ kind: "night-werewolves-reveal" }));
+      }
     } else if (k === "night-werewolves-reveal") {
       // Solo wolves also peek a center card here — give extra read time.
       hold(7000, () => setPhase({ kind: "night-seer-pass" }));
     } else if (k === "night-seer-pass") {
       const seerId = findPlayerIdByStartingRole(state.startingRoles, "seer");
-      const next: Phase = seerId
-        ? { kind: "night-seer-choose" }
-        : { kind: "night-robber-pass" };
-      afterCue(ONENIGHT_CUES.nightSeer, () => setPhase(next));
+      if (!seerId) {
+        hold(0, () => setPhase({ kind: "night-robber-pass" }));
+      } else {
+        afterCue(ONENIGHT_CUES.nightSeer, () => setPhase({ kind: "night-seer-choose" }));
+      }
     } else if (k === "night-seer-result-player" || k === "night-seer-result-center") {
       hold(6000, () => setPhase({ kind: "night-robber-pass" }));
     } else if (k === "night-robber-pass") {
       const robberId = findPlayerIdByStartingRole(state.startingRoles, "robber");
-      const next: Phase = robberId
-        ? { kind: "night-robber-pick" }
-        : { kind: "night-troublemaker-pass" };
-      afterCue(ONENIGHT_CUES.nightRobber, () => setPhase(next));
+      if (!robberId) {
+        hold(0, () => setPhase({ kind: "night-troublemaker-pass" }));
+      } else {
+        afterCue(ONENIGHT_CUES.nightRobber, () => setPhase({ kind: "night-robber-pick" }));
+      }
     } else if (k === "night-robber-result") {
       hold(6000, () => setPhase({ kind: "night-troublemaker-pass" }));
     } else if (k === "night-troublemaker-pass") {
       const tmId = findPlayerIdByStartingRole(state.startingRoles, "troublemaker");
-      const next: Phase = tmId
-        ? { kind: "night-troublemaker-pick1" }
-        : { kind: "day-intro" };
-      afterCue(ONENIGHT_CUES.nightTroublemaker, () => setPhase(next));
+      if (!tmId) {
+        hold(0, () => setPhase({ kind: "day-intro" }));
+      } else {
+        afterCue(ONENIGHT_CUES.nightTroublemaker, () => setPhase({ kind: "night-troublemaker-pick1" }));
+      }
     } else if (k === "night-troublemaker-done") {
       hold(5000, () => setPhase({ kind: "day-intro" }));
     } else if (k === "day-intro") {
