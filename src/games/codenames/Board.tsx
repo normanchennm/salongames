@@ -246,8 +246,17 @@ const CodenamesLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete
       next[index] = { ...card, revealed: true };
       // Check endgame first.
       if (card.color === "assassin") {
+        // Assassin cue is played by the end-phase useEffect.
         setPhase({ kind: "end", roster: phase.roster, first: phase.first, cards: next, winner: nextTeam, reason: `${phase.team} hit the Assassin` });
         return;
+      }
+      // Per-card reveal narration: "contact" when a team finds their
+      // own colour, "bystander" for a neutral, no cue if the card is
+      // the opposing team's (the team-switch is its own beat).
+      if (card.color === phase.team) {
+        playCue(CODENAMES_CUES.contact);
+      } else if (card.color === "neutral") {
+        playCue(CODENAMES_CUES.bystander);
       }
       // Did the guessing team reveal all their words?
       const remAfterA = countRemaining(next, "A");

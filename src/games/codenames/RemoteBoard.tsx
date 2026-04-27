@@ -34,6 +34,41 @@ export const CodenamesRemoteBoard: React.FC<Props> = ({ players, remote, onCompl
     }
   }, [state]);
 
+  // Per-card reveal narration. Compares the previous and current card
+  // arrays; if a card flipped from hidden to revealed, fires "contact"
+  // (own team's colour) or "bystander" (neutral). Opposing-team and
+  // assassin reveals get their narration from the team-switch / end-
+  // game effects, not here. Track previous active team via ref so we
+  // can reason about whose colour was hit even after a team switch.
+  const prevCardsRef = useRef<Card[] | null>(null);
+  const prevTeamRef = useRef<"A" | "B" | null>(null);
+  useEffect(() => {
+    if (!state) {
+      prevCardsRef.current = null;
+      prevTeamRef.current = null;
+      return;
+    }
+    if (state.kind !== "playing") {
+      prevCardsRef.current = state.cards;
+      return;
+    }
+    const prev = prevCardsRef.current;
+    const prevTeam = prevTeamRef.current;
+    const curr = state.cards;
+    if (prev && prevTeam && prev.length === curr.length) {
+      for (let i = 0; i < curr.length; i++) {
+        if (!prev[i].revealed && curr[i].revealed) {
+          const color = curr[i].color;
+          if (color === prevTeam) playCue(CODENAMES_CUES.contact);
+          else if (color === "neutral") playCue(CODENAMES_CUES.bystander);
+          break;
+        }
+      }
+    }
+    prevCardsRef.current = curr;
+    prevTeamRef.current = state.team;
+  }, [state]);
+
   useEffect(() => {
     if (!isHost) return;
     if (!state || state.kind !== "end") return;

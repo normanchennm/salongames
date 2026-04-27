@@ -57,6 +57,11 @@ const AvalonLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, o
   useScrollToTop(phase.kind + ("round" in phase ? `-${phase.round}` : "") + ("current" in phase ? `-${phase.current}` : ""));
 
   // Narration cues for dramatic beats.
+  // Vote-tally narration (proposalApproved / proposalRejected) lives
+  // inline in the team-vote render below, since the tally happens
+  // mid-render before the phase transitions away — wiring it here
+  // would only catch the post-transition phase, by which point
+  // dramatically the moment has passed.
   useEffect(() => {
     if (phase.kind === "quest-resolve") {
       playCue(phase.result === "success" ? AVALON_CUES.missionSuccess : AVALON_CUES.missionFail);
@@ -200,6 +205,10 @@ const AvalonLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, o
     if (!voter) {
       const approves = Object.values(phase.votes).filter((v) => v === "approve").length;
       const passed = approves > assigned.length / 2;
+      // Narrate the vote outcome as the table sees it. Wiring inline
+      // (rather than in the phase-change useEffect) so the cue lands
+      // on the moment the tally resolves, not after the next phase.
+      playCue(passed ? AVALON_CUES.proposalApproved : AVALON_CUES.proposalRejected);
       setTimeout(() => {
         if (passed) {
           setPhase({

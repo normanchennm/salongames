@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { GameComponentProps, Player } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
 import { RoleArt } from "@/components/RoleArt";
@@ -93,6 +93,23 @@ const InsiderLocalBoard: React.FC<GameComponentProps> = ({ players, onComplete, 
     else if (phase.kind === "hunting") playCue(INSIDER_CUES.huntStart);
     else if (phase.kind === "end") playCue(phase.outcome === "caught" ? INSIDER_CUES.insiderCaught : INSIDER_CUES.insiderEscaped);
   }, [phase]);
+
+  // One-minute warning during guessing — fires once when the clock crosses
+  // 60s remaining. The guessOneMinute cue exists in the registry but
+  // wasn't being triggered before, leaving the table flying blind in the
+  // most tense window of the round.
+  const oneMinFiredRef = useRef(false);
+  useEffect(() => {
+    if (phase.kind !== "guessing") {
+      oneMinFiredRef.current = false;
+      return;
+    }
+    const remaining = phase.endsAt - now;
+    if (!oneMinFiredRef.current && remaining <= 60_000 && remaining > 0) {
+      oneMinFiredRef.current = true;
+      playCue(INSIDER_CUES.guessOneMinute);
+    }
+  }, [phase, now]);
 
   function finishGame(winnerIds: string[], outcome: string) {
     onComplete({

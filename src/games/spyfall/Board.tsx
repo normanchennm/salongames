@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { GameComponentProps } from "@/games/types";
 import { useScrollToTop } from "@/lib/useScrollToTop";
 import { LOCATIONS, randomLocation, randomRole, type Location } from "./locations";
@@ -53,10 +53,19 @@ export const SpyfallBoard: React.FC<GameComponentProps> = ({ players, onComplete
     if (phase.kind === "discussion") playCue(SPYFALL_CUES.roundStart);
     else if (phase.kind === "vote") playCue(SPYFALL_CUES.timeUp);
     else if (phase.kind === "resolve") {
-      const p = phase as { kind: "resolve"; spyCaught?: boolean };
-      playCue(p.spyCaught ? SPYFALL_CUES.civiliansWin : SPYFALL_CUES.spyWins);
+      // The resolve phase splits two ways: if the village nailed the
+      // spy we hand the spy a guess screen (spyGuessesLocation cue);
+      // otherwise the spy wins outright (spyWins cue). Determined by
+      // whether the accused player matches the actual spy.
+      const accused = assignments.find((a) => a.id === phase.accusedId);
+      const actualSpy = assignments.find((a) => a.isSpy);
+      const correctlyAccused = !!accused && !!actualSpy && accused.id === actualSpy.id;
+      if (correctlyAccused) playCue(SPYFALL_CUES.spyGuessesLocation);
+      else playCue(SPYFALL_CUES.spyWins);
+    } else if (phase.kind === "end") {
+      playCue(phase.winner === "village" ? SPYFALL_CUES.civiliansWin : SPYFALL_CUES.spyWins);
     }
-  }, [phase]);
+  }, [phase, assignments]);
 
   // Ticking clock state for the discussion phase. Recomputed every
   // second while that phase is active; cheap, doesn't affect other
@@ -67,6 +76,24 @@ export const SpyfallBoard: React.FC<GameComponentProps> = ({ players, onComplete
     const id = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(id);
   }, [phase.kind]);
+
+  // One-minute warning during discussion. Fires once when the clock
+  // crosses 60s remaining. Without this the table loses awareness of
+  // the closing window — the cue exists in the registry but was never
+  // triggered.
+  const oneMinFiredRef = useRef(false);
+  useEffect(() => {
+    if (phase.kind !== "discussion") {
+      oneMinFiredRef.current = false;
+      return;
+    }
+    const elapsedSec = Math.floor((now - phase.startedAt) / 1000);
+    const remainingSec = phase.durationSec - elapsedSec;
+    if (!oneMinFiredRef.current && remainingSec <= 60 && remainingSec > 0) {
+      oneMinFiredRef.current = true;
+      playCue(SPYFALL_CUES.oneMinuteLeft);
+    }
+  }, [phase, now]);
 
   function finishGame(winner: "village" | "spy", spyGuess?: string) {
     const spy = assignments.find((a) => a.isSpy)!;
