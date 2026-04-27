@@ -44,6 +44,8 @@ import { llRemoteInitialState, llRemoteReducer } from "./lovelanguages/remote";
 import { cbRemoteInitialState, cbRemoteReducer } from "./compatbingo/remote";
 import { hssRemoteInitialState, hssRemoteReducer } from "./hesaidshesaid/remote";
 import { nwRemoteInitialState, nwRemoteReducer } from "./newlywed/remote";
+import { ctRemoteInitialState, ctRemoteReducer } from "./charadestwo/remote";
+import { tptRemoteInitialState, tptRemoteReducer } from "./telephonepictwo/remote";
 
 export const REMOTE_CONFIGS: Record<string, RemoteGameConfig> = {
   fibbage: { initialState: fibRemoteInitialState, reducer: fibRemoteReducer as RemoteGameConfig["reducer"] },
@@ -82,6 +84,8 @@ export const REMOTE_CONFIGS: Record<string, RemoteGameConfig> = {
   compatbingo: { initialState: cbRemoteInitialState, reducer: cbRemoteReducer as RemoteGameConfig["reducer"] },
   hesaidshesaid: { initialState: hssRemoteInitialState, reducer: hssRemoteReducer as RemoteGameConfig["reducer"] },
   newlywed: { initialState: nwRemoteInitialState, reducer: nwRemoteReducer as RemoteGameConfig["reducer"] },
+  charadestwo: { initialState: ctRemoteInitialState, reducer: ctRemoteReducer as RemoteGameConfig["reducer"] },
+  telephonepictwo: { initialState: tptRemoteInitialState, reducer: tptRemoteReducer as RemoteGameConfig["reducer"] },
 };
 
 export function getRemoteConfig(gameId: string): RemoteGameConfig | undefined {
