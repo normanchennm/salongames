@@ -1,5 +1,5 @@
 import type { Game } from "@/games/types";
-import { ComingSoonBoard } from "@/games/_shared/ComingSoonBoard";
+import { NewlywedBoard } from "./Board";
 
 const newlywed: Game = {
   id: "newlywed",
@@ -12,9 +12,9 @@ const newlywed: Game = {
   tier: "free",
   coverGradient: ["#4a3a2a", "#100d0b"],
   description:
-    "Three escalating rounds — easy (favorite food), medium (most embarrassing memory), spicy (red flags noticed). Each writes a private answer; partner predicts what they wrote. The score doesn't matter as much as the conversations the gaps start. Same engine pattern as Fibbage, but flipped: you're not bluffing strangers, you're trying to read each other.",
-  Component: ComingSoonBoard,
-  comingSoon: true,
+    "Three escalating rounds — easy (favorites), medium (memory), spicy (honest). Each round, three questions; one of you is the subject (writes the truth) and the other guesses. You alternate. Out of 9. The score doesn't matter as much as the conversations the gaps start. Same predict-your-partner pattern as Fibbage but flipped: it's not bluffing strangers, it's reading each other.",
+  Component: NewlywedBoard,
+  supportsRemote: true,
 };
 
 export default newlywed;

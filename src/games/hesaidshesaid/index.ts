@@ -1,5 +1,5 @@
 import type { Game } from "@/games/types";
-import { ComingSoonBoard } from "@/games/_shared/ComingSoonBoard";
+import { HesaidshesaidBoard } from "./Board";
 
 const hesaidshesaid: Game = {
   id: "hesaidshesaid",
@@ -12,9 +12,9 @@ const hesaidshesaid: Game = {
   tier: "free",
   coverGradient: ["#3a4a2a", "#100d0b"],
   description:
-    "One of you writes a private answer to a prompt about the relationship. The other guesses what they wrote. Match scores a point — but the divergence is the actual prize, because that's where the conversation is. Use it as a 10-minute warmup or a 90-minute opener; we don't tell you when to stop.",
-  Component: ComingSoonBoard,
-  comingSoon: true,
+    "For each prompt, both of you privately write your honest answer plus your guess of the other's. Reveal scores 0–2 per round; score is incidental. The misses are the actual prize because that's where the conversation hides. Use it as a 10-minute warmup or a 90-minute opener; we don't tell you when to stop.",
+  Component: HesaidshesaidBoard,
+  supportsRemote: true,
 };
 
 export default hesaidshesaid;

@@ -41,6 +41,9 @@ import { drRemoteInitialState, drRemoteReducer } from "./dateroulette/remote";
 import { blRemoteInitialState, blRemoteReducer } from "./bucketlist/remote";
 import { muRemoteInitialState, muRemoteReducer } from "./mapofus/remote";
 import { llRemoteInitialState, llRemoteReducer } from "./lovelanguages/remote";
+import { cbRemoteInitialState, cbRemoteReducer } from "./compatbingo/remote";
+import { hssRemoteInitialState, hssRemoteReducer } from "./hesaidshesaid/remote";
+import { nwRemoteInitialState, nwRemoteReducer } from "./newlywed/remote";
 
 export const REMOTE_CONFIGS: Record<string, RemoteGameConfig> = {
   fibbage: { initialState: fibRemoteInitialState, reducer: fibRemoteReducer as RemoteGameConfig["reducer"] },
@@ -76,6 +79,9 @@ export const REMOTE_CONFIGS: Record<string, RemoteGameConfig> = {
   bucketlist: { initialState: () => blRemoteInitialState(0), reducer: blRemoteReducer as RemoteGameConfig["reducer"] },
   mapofus: { initialState: () => muRemoteInitialState(0), reducer: muRemoteReducer as RemoteGameConfig["reducer"] },
   lovelanguages: { initialState: llRemoteInitialState, reducer: llRemoteReducer as RemoteGameConfig["reducer"] },
+  compatbingo: { initialState: cbRemoteInitialState, reducer: cbRemoteReducer as RemoteGameConfig["reducer"] },
+  hesaidshesaid: { initialState: hssRemoteInitialState, reducer: hssRemoteReducer as RemoteGameConfig["reducer"] },
+  newlywed: { initialState: nwRemoteInitialState, reducer: nwRemoteReducer as RemoteGameConfig["reducer"] },
 };
 
 export function getRemoteConfig(gameId: string): RemoteGameConfig | undefined {
