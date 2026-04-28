@@ -6,7 +6,7 @@ const neverhaveiever: Game = {
   name: "Never Have I Ever",
   tagline: "Prompt cards that reveal who's done what.",
   category: "party",
-  minPlayers: 3,
+  minPlayers: 2,
   maxPlayers: 20,
   estimatedMinutes: 20,
   tier: "free",

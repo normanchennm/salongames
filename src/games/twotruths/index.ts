@@ -6,7 +6,7 @@ const twotruths: Game = {
   name: "Two Truths and a Lie",
   tagline: "Three statements. One lie. Who can spot it?",
   category: "party",
-  minPlayers: 3,
+  minPlayers: 2,
   maxPlayers: 10,
   estimatedMinutes: 15,
   tier: "free",

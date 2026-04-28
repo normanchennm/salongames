@@ -43,7 +43,7 @@ const TIERS: { heading: string; subline: string; picks: Pick[] }[] = [
     subline: "Shared experience beats small talk. Bonus: you'll have something to tell your friends about later.",
     picks: [
       { id: "escaperoom",      pitch: "The cursed antique shop or the 1928 hotel murder. 15-20 minutes, side by side, one device. The best kind of third-date." },
-      { id: "telephonepic",    pitch: "You write something weird. They draw it. You caption their drawing. By the end you have a tiny artifact of the night to screenshot." },
+      { id: "telephonepictwo", pitch: "You write something weird. They draw it. You caption their drawing. By the end you have a tiny artifact of the night to screenshot." },
       { id: "codenames",       pitch: "Two vs two works for double dates. You'll learn who thinks in metaphor and who thinks in categories. Important data." },
     ],
   },
